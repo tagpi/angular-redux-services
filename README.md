@@ -1,27 +1,99 @@
-# ReduxServices
+# Redux Tools for @angular-redux
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.7.3.
+## use
+- npm install --save angular-redux-service
 
-## Development server
+- import ReduxModule into the main module (app.module)
+- initialize redux
+```typescript
+import { AppComponent } from './app.component';
+import { ReduxModule, ReduxService } from 'angular-redux-service';
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+@NgModule({
+  imports: [ ReduxModule ]
+})
+export class AppModule { 
+  constructor(reduxService: ReduxService) {
+    reduxService.init({}, [], environment.production);
+  }
+}
+```
 
-## Code scaffolding
+## state Pipe
+- | state : async pipe that will display the redux path
+```html
+<div *ngIf="'@search-example' | rxState as state">
+  query: {{ state?.query }}
+</div>
+```
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Redux Service Configuration
+- single file redux state slice configuration
+- @action : creates a method that will dispatch the action inside
+- @epic : creates an epic that will only trigger when dispatch is called by ReduxService, it will not trigger on a normal redux dispatch
 
-## Build
+```typescript
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs/Observable';
+import 'rxjs/add/observable/of';
+import { Action, rxAction, rxEpic } from '../../redux';
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
+export interface State {
+  query: string;
+  result: any[];
+}
 
-## Running unit tests
+@Injectable()
+export class SearchExampleService {
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+  static path = '@search-example';
+  static initial: State = {
+    query: '',
+    result: []
+  };
 
-## Running end-to-end tests
+  @rxAction(true) unsafe(criteria: string) {
+    return (state: State, action: Action) => {
+      return Object.assign({ ...state, query: action.payload });
+    };
+  }
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+  @rxAction() query(criteria: string) {
+    return (state: State, action: Action) => {
+      state.query = action.payload;
+    };
+  }
 
-## Further help
+  @rxEpic('query') callQueryEndPoint(action: Action) {
+    return Observable.of({
+      type: `${SearchExampleService.path}.setResults`,
+      payload: [ 1, 2, 3 ]
+    });
+  }
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+  @rxAction() setResults() {
+    return (state: State, action: Action) => {
+      state.result = action.payload;
+    };
+  }
+
+  @rxAction(true) clear() {
+    return (state: State) => {
+      return SearchExampleService.initial;
+    };
+  }
+
+}
+```
+
+- provide the redux map service and add it to the redux service
+```typescript
+@NgModule({
+  providers: [ SearchExampleService ]
+})
+export class ExampleModule {
+  constructor(reduxService: ReduxService, searchExampleService: SearchExampleService) {
+    reduxService.addMap(exampleService);
+  }
+}
+```

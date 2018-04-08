@@ -1,0 +1,25 @@
+{
+  "$schema": "../../node_modules/ng-packagr/package.schema.json",
+  "name": "angular-redux-services",
+  "version": "0.0.1",
+  "ngPackage": {
+    "lib": {
+      "entryFile": "../../src/app/module/redux/index.ts",
+      "umdModuleIds": {
+        "lodash": "_",
+        "redux": "_",
+        "redux-observable": "_"
+      }
+    },
+    "whitelistedNonPeerDependencies": [
+      "lodash",
+      "redux",
+      "redux-observable"
+    ]
+  },
+  "dependencies": {
+    "lodash": "^4.17.5",
+    "redux": "^3.7.2",
+    "redux-observable": "^0.18.0"
+  }
+}
