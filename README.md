@@ -2,13 +2,10 @@
 
 ## use
 - npm install --save angular-redux-service
-
 - import ReduxModule into the main module (app.module)
-- initialize redux
+- run reduxService.init
 ```typescript
-import { AppComponent } from './app.component';
 import { ReduxModule, ReduxService } from 'angular-redux-service';
-
 @NgModule({
   imports: [ ReduxModule ]
 })
@@ -20,17 +17,17 @@ export class AppModule {
 ```
 
 ## state Pipe
-- | state : async pipe that will display the redux path
+- async pipe that will display the redux path
 ```html
-<div *ngIf="'@search-example' | rxState as state">
-  query: {{ state?.query }}
+<div *ngIf="'@search-example' | rxState as search">
+  query: {{ search?.query }}
 </div>
 ```
 
 ## Redux Service Configuration
 - single file redux state slice configuration
-- @action : creates a method that will dispatch the action inside
-- @epic : creates an epic that will only trigger when dispatch is called by ReduxService, it will not trigger on a normal redux dispatch
+- @rxAction : creates a method that will dispatch the action inside
+- @rxEpic : creates an epic that will only trigger when dispatch is called by ReduxService, it will not trigger on a normal redux dispatch
 
 ```typescript
 import { Injectable } from '@angular/core';

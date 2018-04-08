@@ -10,8 +10,8 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "create-angular-dist": "ng-packagr -p \"bin/deploy/package.json\"",
-    "publish-angular-dist": "git subtree split --branch v0.0.1 && git push origin v0.0.1:v0.0.1",
-    "deploy-angular-dist": "git subtree split --branch deploy --prefix bin/deploy/dist/ && git push origin deploy:deploy"
+    "deploy-angular-dist": "git subtree split --branch deploy --prefix bin/deploy/dist/ && git push origin deploy:deploy",
+    "publish": "npm publish \"bin/deploy/\""
   },
   "private": true,
   "dependencies": {
