@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { combineReducers, createStore, Store, compose, applyMiddleware } from 'redux';
-import { createEpicMiddleware, combineEpics } from 'redux-observable';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 
 import { SubscriberManger } from '../class/subscriber-manager.class';
 import { MapManager } from '../class/map-manager.class';
@@ -46,12 +45,12 @@ export class ReduxService {
    * @param epics Global epics using redux-observables
    * @param isProduction Adds devtools if non production
    */
-  public init(preloadedState = {}, epics = [], isProduction = false) {
+  public init(preloadedState = {}, middleware = [], isProduction = false) {
 
     // middleware
     const composeMiddleware = (!isProduction && window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__']) || compose;
-    const middleware = composeMiddleware(applyMiddleware(
-      createEpicMiddleware(combineEpics(...epics)),
+    const loadedMiddleware = composeMiddleware(applyMiddleware(
+      ...middleware,
       this.subscriber.createMiddleware()
     ));
 
@@ -59,7 +58,7 @@ export class ReduxService {
     this.store = createStore(
       combineReducers(this.reducers),
       preloadedState,
-      middleware
+      loadedMiddleware
     );
 
     // service has been initialized

@@ -58,7 +58,7 @@ The epic function should return an Observable<Action> to continue the epic chain
 ```typescript
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/of';
+import { of } from 'rxjs/operators';
 import { Action, rxAction, rxEpic } from '../../redux';
 
 export interface State {
@@ -82,7 +82,7 @@ export class SearchExampleService {
   }
 
   @rxEpic('query') callQueryEndPoint(action: Action) {
-    return Observable.of({
+    return of({
       type: `${SearchExampleService.path}.setResults`,
       payload: [ 1, 2, 3 ]
     });

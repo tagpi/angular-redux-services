@@ -1,6 +1,6 @@
 {
   "name": "angular-redux-services",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "license": "MIT",
   "scripts": {
     "ng": "ng",
@@ -11,24 +11,22 @@
     "e2e": "ng e2e",
     "create-angular-dist": "ng-packagr -p \"bin/deploy/package.json\"",
     "deploy-angular-dist": "git subtree split --branch deploy --prefix bin/deploy/dist/ && git push origin deploy:deploy",
-    "publish": "npm publish \"bin/deploy/\""
+    "publish": "npm publish \"bin/deploy/dist/\""
   },
-  "private": true,
   "dependencies": {
-    "@angular/animations": "^5.2.0",
-    "@angular/common": "^5.2.0",
-    "@angular/compiler": "^5.2.0",
-    "@angular/core": "^5.2.0",
-    "@angular/forms": "^5.2.0",
-    "@angular/http": "^5.2.0",
-    "@angular/platform-browser": "^5.2.0",
-    "@angular/platform-browser-dynamic": "^5.2.0",
-    "@angular/router": "^5.2.0",
+    "@angular/animations": "^6.0.0-rc.3",
+    "@angular/common": "^6.0.0-rc.3",
+    "@angular/compiler": "^6.0.0-rc.3",
+    "@angular/core": "^6.0.0-rc.3",
+    "@angular/forms": "^6.0.0-rc.3",
+    "@angular/http": "^6.0.0-rc.3",
+    "@angular/platform-browser": "^6.0.0-rc.3",
+    "@angular/platform-browser-dynamic": "^6.0.0-rc.3",
+    "@angular/router": "^6.0.0-rc.3",
     "core-js": "^2.4.1",
     "lodash": "^4.17.5",
     "redux": "^3.7.2",
-    "redux-observable": "^0.18.0",
-    "rxjs": "^5.5.6",
+    "rxjs": "^6.0.0-rc.0",
     "zone.js": "^0.8.19"
   },
   "devDependencies": {

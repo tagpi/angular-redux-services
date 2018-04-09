@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/of';
+import { Observable, of } from 'rxjs';
 import { Action, rxAction, rxEpic } from '../../redux';
 
 export interface State {
@@ -30,7 +29,7 @@ export class SearchExampleService {
   }
 
   @rxEpic('query') callQueryEndPoint(action: Action) {
-    return Observable.of({
+    return of({
       type: `${SearchExampleService.path}.setResults`,
       payload: [ 1, 2, 3 ]
     });

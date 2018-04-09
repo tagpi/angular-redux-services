@@ -1,7 +1,7 @@
 import { get, cloneDeep } from 'lodash';
 import { ReduxService } from '../service/redux.service';
 import { Action } from '../model/action.model';
-import 'rxjs/add/operator/take';
+import { take } from 'rxjs/operators';
 
 export class MapManager {
 
@@ -152,7 +152,7 @@ export class MapManager {
     const epics = this.epic[action.type];
     if (epics) {
       epics.forEach(epic => epic(action.payload)
-        .take(1)
+        .pipe(take(1))
         .subscribe(reply => reduxService.dispatch(reply))
       );
     }
