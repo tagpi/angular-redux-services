@@ -1,10 +1,9 @@
 import { __spread } from 'tslib';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
-import 'rxjs/add/operator/take';
+import { take } from 'rxjs/operators';
 import { Injectable, Pipe, ChangeDetectorRef, NgModule } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
-import { createEpicMiddleware, combineEpics } from 'redux-observable';
 import { AsyncPipe, CommonModule } from '@angular/common';
 
 var SubscriberManger = /** @class */ (function () {
@@ -143,7 +142,7 @@ var MapManager = /** @class */ (function () {
         var epics = this.epic[action.type];
         if (epics) {
             epics.forEach(function (epic) { return epic(action.payload)
-                .take(1)
+                .pipe(take(1))
                 .subscribe(function (reply) { return reduxService.dispatch(reply); }); });
         }
     };
@@ -162,13 +161,13 @@ var ReduxService = /** @class */ (function () {
         this.subscriber = new SubscriberManger(function () { return _this.getState(); });
         this.map = new MapManager();
     }
-    ReduxService.prototype.init = function (preloadedState, epics, isProduction) {
+    ReduxService.prototype.init = function (preloadedState, middleware, isProduction) {
         if (preloadedState === void 0) { preloadedState = {}; }
-        if (epics === void 0) { epics = []; }
+        if (middleware === void 0) { middleware = []; }
         if (isProduction === void 0) { isProduction = false; }
         var composeMiddleware = (!isProduction && window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__']) || compose;
-        var middleware = composeMiddleware(applyMiddleware(createEpicMiddleware(combineEpics.apply(void 0, __spread(epics))), this.subscriber.createMiddleware()));
-        this.store = createStore(combineReducers(this.reducers), preloadedState, middleware);
+        var loadedMiddleware = composeMiddleware(applyMiddleware.apply(void 0, __spread(middleware, [this.subscriber.createMiddleware()])));
+        this.store = createStore(combineReducers(this.reducers), preloadedState, loadedMiddleware);
         this.isInitialized = true;
         this.map.init(this);
     };

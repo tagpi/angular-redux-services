@@ -1,6 +1,5 @@
 import { ReduxService } from '../service/redux.service';
 import { Action } from '../model/action.model';
-import 'rxjs/add/operator/take';
 export declare class MapManager {
     /**
      * Tracks the loaded services

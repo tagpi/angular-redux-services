@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('rxjs/BehaviorSubject'), require('lodash'), require('rxjs/add/operator/take'), require('@angular/core'), require('redux'), require('redux-observable'), require('@angular/common')) :
-	typeof define === 'function' && define.amd ? define('angular-redux-services', ['exports', 'rxjs/BehaviorSubject', 'lodash', 'rxjs/add/operator/take', '@angular/core', 'redux', 'redux-observable', '@angular/common'], factory) :
-	(factory((global['angular-redux-services'] = {}),global.Rx,global._,global.Rx.Observable.prototype,global.ng.core,global._,global._,global.ng.common));
-}(this, (function (exports,BehaviorSubject,lodash,take,core,redux,reduxObservable,common) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('rxjs'), require('lodash'), require('rxjs/operators'), require('@angular/core'), require('redux'), require('@angular/common')) :
+	typeof define === 'function' && define.amd ? define('angular-redux-services', ['exports', 'rxjs', 'lodash', 'rxjs/operators', '@angular/core', 'redux', '@angular/common'], factory) :
+	(factory((global['angular-redux-services'] = {}),global.rxjs,global._,global.Rx.Observable.prototype,global.ng.core,global._,global.ng.common));
+}(this, (function (exports,rxjs,lodash,operators,core,redux,common) { 'use strict';
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -60,7 +60,7 @@ var SubscriberManger = /** @class */ (function () {
             return sub;
         }
         var value = lodash.get(this.getState(), path);
-        var subj = new BehaviorSubject.BehaviorSubject(value);
+        var subj = new rxjs.BehaviorSubject(value);
         this.selections[path] = subj;
         return subj;
     };
@@ -185,7 +185,7 @@ var MapManager = /** @class */ (function () {
         var epics = this.epic[action.type];
         if (epics) {
             epics.forEach(function (epic) { return epic(action.payload)
-                .take(1)
+                .pipe(operators.take(1))
                 .subscribe(function (reply) { return reduxService.dispatch(reply); }); });
         }
     };
@@ -204,13 +204,13 @@ var ReduxService = /** @class */ (function () {
         this.subscriber = new SubscriberManger(function () { return _this.getState(); });
         this.map = new MapManager();
     }
-    ReduxService.prototype.init = function (preloadedState, epics, isProduction) {
+    ReduxService.prototype.init = function (preloadedState, middleware, isProduction) {
         if (preloadedState === void 0) { preloadedState = {}; }
-        if (epics === void 0) { epics = []; }
+        if (middleware === void 0) { middleware = []; }
         if (isProduction === void 0) { isProduction = false; }
         var composeMiddleware = (!isProduction && window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__']) || redux.compose;
-        var middleware = composeMiddleware(redux.applyMiddleware(reduxObservable.createEpicMiddleware(reduxObservable.combineEpics.apply(void 0, __spread(epics))), this.subscriber.createMiddleware()));
-        this.store = redux.createStore(redux.combineReducers(this.reducers), preloadedState, middleware);
+        var loadedMiddleware = composeMiddleware(redux.applyMiddleware.apply(void 0, __spread(middleware, [this.subscriber.createMiddleware()])));
+        this.store = redux.createStore(redux.combineReducers(this.reducers), preloadedState, loadedMiddleware);
         this.isInitialized = true;
         this.map.init(this);
     };

@@ -1,9 +1,8 @@
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
-import 'rxjs/add/operator/take';
+import { take } from 'rxjs/operators';
 import { Injectable, Pipe, ChangeDetectorRef, NgModule } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
-import { createEpicMiddleware, combineEpics } from 'redux-observable';
 import { AsyncPipe, CommonModule } from '@angular/common';
 
 /**
@@ -232,7 +231,7 @@ class MapManager {
         const /** @type {?} */ epics = this.epic[action.type];
         if (epics) {
             epics.forEach(epic => epic(action.payload)
-                .take(1)
+                .pipe(take(1))
                 .subscribe(reply => reduxService.dispatch(reply)));
         }
     }
@@ -257,16 +256,16 @@ class ReduxService {
     /**
      * Initializes the redux service
      * @param {?=} preloadedState Initial state
-     * @param {?=} epics Global epics using redux-observables
+     * @param {?=} middleware
      * @param {?=} isProduction Adds devtools if non production
      * @return {?}
      */
-    init(preloadedState = {}, epics = [], isProduction = false) {
+    init(preloadedState = {}, middleware = [], isProduction = false) {
         // middleware
         const /** @type {?} */ composeMiddleware = (!isProduction && window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__']) || compose;
-        const /** @type {?} */ middleware = composeMiddleware(applyMiddleware(createEpicMiddleware(combineEpics(...epics)), this.subscriber.createMiddleware()));
+        const /** @type {?} */ loadedMiddleware = composeMiddleware(applyMiddleware(...middleware, this.subscriber.createMiddleware()));
         // create store
-        this.store = createStore(combineReducers(this.reducers), preloadedState, middleware);
+        this.store = createStore(combineReducers(this.reducers), preloadedState, loadedMiddleware);
         // service has been initialized
         this.isInitialized = true;
         // initialize map with newly created store

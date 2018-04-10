@@ -1,4 +1,4 @@
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { BehaviorSubject } from 'rxjs';
 import { Action } from '../model/action.model';
 export declare class ReduxService {
     isInitialized: boolean;
@@ -25,7 +25,7 @@ export declare class ReduxService {
      * @param epics Global epics using redux-observables
      * @param isProduction Adds devtools if non production
      */
-    init(preloadedState?: {}, epics?: any[], isProduction?: boolean): void;
+    init(preloadedState?: {}, middleware?: any[], isProduction?: boolean): void;
     /**
      * Add a reducer.
      * @param name Root path for the reducer (@search)
