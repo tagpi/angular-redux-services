@@ -12,5 +12,23 @@
   "module": "esm5/angular-redux-services.js",
   "es2015": "esm2015/angular-redux-services.js",
   "typings": "angular-redux-services.d.ts",
-  "metadata": "angular-redux-services.metadata.json"
+  "metadata": "angular-redux-services.metadata.json",
+  "description": "Simplify the redux pattern within Angular.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tagpi/angular-redux-services.git"
+  },
+  "keywords": [
+    "angular",
+    "redux"
+  ],
+  "author": "Tagpi",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tagpi/angular-redux-services/issues"
+  },
+  "homepage": "https://github.com/tagpi/angular-redux-services#readme"
 }
