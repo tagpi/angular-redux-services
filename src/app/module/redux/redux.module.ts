@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, ModuleWithProviders } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReduxService } from './service/redux.service';
 import { RxStatePipe } from './pipe/rx-state.pipe';
@@ -7,8 +7,14 @@ import { RxStatePipe } from './pipe/rx-state.pipe';
   imports: [ CommonModule ],
   declarations: [ RxStatePipe ],
   exports: [ RxStatePipe ],
-  providers: [ ReduxService ]
 })
 export class ReduxModule {
+
+  static forRoot(): ModuleWithProviders {
+    return {
+      ngModule: ReduxModule,
+      providers: [ ReduxService ]
+    };
+  }
 
 }

@@ -13,7 +13,7 @@ import { ExampleModule } from './module/example/example.module';
   ],
   imports: [
     BrowserModule,
-    ReduxModule,
+    ReduxModule.forRoot(),
     ExampleModule
   ],
   providers: [ ],

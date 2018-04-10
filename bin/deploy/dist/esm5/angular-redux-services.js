@@ -37,11 +37,6 @@ var SubscriberManger = /** @class */ (function () {
         for (var i = keys.length - 1; i > -1; i--) {
             var path = keys[i];
             var subject = this.selections[path];
-            if (!subject.observers.length) {
-                subject.complete();
-                delete this.selections[path];
-                return;
-            }
             var stateValue = get(state, path);
             if (!isEqual(stateValue, subject.getValue())) {
                 subject.next(stateValue);
@@ -221,6 +216,12 @@ RxStatePipe.ctorParameters = function () { return [
 var ReduxModule = /** @class */ (function () {
     function ReduxModule() {
     }
+    ReduxModule.forRoot = function () {
+        return {
+            ngModule: ReduxModule,
+            providers: [ReduxService]
+        };
+    };
     return ReduxModule;
 }());
 ReduxModule.decorators = [
@@ -228,7 +229,6 @@ ReduxModule.decorators = [
                 imports: [CommonModule],
                 declarations: [RxStatePipe],
                 exports: [RxStatePipe],
-                providers: [ReduxService]
             },] },
 ];
 function rxAction(useOpenReducer) {

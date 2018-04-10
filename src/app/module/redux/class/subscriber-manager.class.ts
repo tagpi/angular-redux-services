@@ -52,13 +52,6 @@ export class SubscriberManger {
     for (let i = keys.length - 1; i > -1; i--) {
       const path = keys[i];
       const subject = this.selections[path];
-
-      if (!subject.observers.length) {
-        subject.complete();
-        delete this.selections[path];
-        return;
-      }
-
       const stateValue = get(state, path);
       if (!isEqual(stateValue, subject.getValue())) {
         subject.next(stateValue);

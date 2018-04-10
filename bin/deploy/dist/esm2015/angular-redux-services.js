@@ -61,11 +61,6 @@ class SubscriberManger {
         for (let /** @type {?} */ i = keys.length - 1; i > -1; i--) {
             const /** @type {?} */ path = keys[i];
             const /** @type {?} */ subject = this.selections[path];
-            if (!subject.observers.length) {
-                subject.complete();
-                delete this.selections[path];
-                return;
-            }
             const /** @type {?} */ stateValue = get(state, path);
             if (!isEqual(stateValue, subject.getValue())) {
                 subject.next(stateValue);
@@ -366,13 +361,21 @@ RxStatePipe.ctorParameters = () => [
  * @suppress {checkTypes} checked by tsc
  */
 class ReduxModule {
+    /**
+     * @return {?}
+     */
+    static forRoot() {
+        return {
+            ngModule: ReduxModule,
+            providers: [ReduxService]
+        };
+    }
 }
 ReduxModule.decorators = [
     { type: NgModule, args: [{
                 imports: [CommonModule],
                 declarations: [RxStatePipe],
                 exports: [RxStatePipe],
-                providers: [ReduxService]
             },] },
 ];
 

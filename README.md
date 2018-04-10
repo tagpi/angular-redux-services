@@ -9,7 +9,7 @@
 ```typescript
 import { ReduxModule, ReduxService } from 'angular-redux-service';
 @NgModule({
-  imports: [ ReduxModule ]
+  imports: [ ReduxModule.forRoot() ]
 })
 export class AppModule { 
   constructor(reduxService: ReduxService) {
@@ -17,6 +17,8 @@ export class AppModule {
   }
 }
 ```
+
+Note: only use .forRoot() on the application root module.
 
 ## rxState Pipe
 
