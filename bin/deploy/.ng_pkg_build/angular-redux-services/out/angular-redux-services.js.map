@@ -1,0 +1,1 @@
+{"version":3,"file":"angular-redux-services.js","sourceRoot":"","sources":["angular-redux-services.ts"],"names":[],"mappings":";;;;;;;AAIA,4DAAc,SAAS,CAAC;AAExB,OAAO,EAAC,WAAW,IAAI,EAAE,EAAC,MAAM,sBAAsB,CAAC","sourcesContent":["/**\n * Generated bundle index. Do not edit.\n */\n\nexport * from './index';\n\nexport {RxStatePipe as ɵa} from './pipe/rx-state.pipe';"]}

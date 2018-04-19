@@ -33,7 +33,7 @@ export declare class MapManager {
      */
     private identify(reduxService, serviceInstance);
     /**
-     * Add an epic
+     * Add an epic.
      */
     private addEpic(reduxService, serviceInstance, propertyName, epic);
     private addAction(reduxService, serviceInstance, propertyName, action, reducer);

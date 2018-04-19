@@ -31,12 +31,12 @@ export declare class ReduxService {
      * @param name Root path for the reducer (@search)
      * @param reducer Reducer method (state, action) => state
      */
-    addReducer(name: any, reducer: any): void;
+    add(name: any, reducer: any): void;
     /**
-     * Add a redux map.
+     * Registers a redux service instance.
      * @param serviceInstance
      */
-    addMap(serviceInstance: any): void;
+    register(serviceInstance: any): void;
     /**
      * Return the current state.
      */

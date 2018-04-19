@@ -2,7 +2,8 @@ import { BehaviorSubject } from 'rxjs';
 export declare class SubscriberManger {
     private getState;
     /**
-     * Tracks the active selections.
+     * Tracks the active selections. Each subject gets updated
+     * when broadcast is called.
      */
     private selections;
     /**
@@ -11,10 +12,20 @@ export declare class SubscriberManger {
      */
     constructor(getState: () => any);
     /**
-     * Get an observable for the state slice.
+     * Returns a redux observable for the state slice.
      * @param path
      */
     select<T>(path: string): BehaviorSubject<T>;
+    /**
+     * Sets the state slice.
+     * @param path
+     */
+    private setSlice<T>(path);
+    /**
+     * Clear the slice.
+     * @param path
+     */
+    private removeSlice(path);
     /**
      * Return the subscriber middleware.
      */
