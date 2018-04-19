@@ -13,7 +13,7 @@ import { ReduxService } from '../redux';
 export class ExampleModule {
 
   constructor(reduxService: ReduxService, searchExampleService: SearchExampleService) {
-    reduxService.addMap(searchExampleService);
+    reduxService.register(searchExampleService);
   }
 
 }

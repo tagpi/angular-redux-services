@@ -8,7 +8,7 @@ export class MapManager {
   /**
    * Tracks the loaded services
    */
-  private loaded: string[] = [];
+  private loaded: { [path: string]: any } = {};
 
   /**
    * Safe epic list. Only gets triggered when dispatched through this service.
@@ -55,13 +55,6 @@ export class MapManager {
       return;
     }
 
-    // check for duplicate
-    if (this.loaded.find(item => item === path)) {
-      console.warn('Attempted to load duplicate path', path);
-      return;
-    }
-    this.loaded.push(path);
-
     // identify properties
     this.identify(reduxService, serviceInstance);
 
@@ -74,7 +67,8 @@ export class MapManager {
    */
   private identify(reduxService: ReduxService, serviceInstance: any) {
 
-    const reducer = {};
+    const path = serviceInstance.constructor.path;
+    const reducer = (this.loaded[path] = this.loaded[path] || {});
 
     // identify parts
     const keys = Object.getOwnPropertyNames(serviceInstance.constructor.prototype);
@@ -100,7 +94,7 @@ export class MapManager {
   }
 
   /**
-   * Add an epic
+   * Add an epic.
    */
   private addEpic(reduxService: ReduxService, serviceInstance: any, propertyName: string, epic: any) {
     const actionName = `${serviceInstance.constructor.path}.${epic.action}`;
@@ -111,7 +105,7 @@ export class MapManager {
   private addAction(reduxService: ReduxService, serviceInstance: any, propertyName: string, action: any, reducer: any) {
     const actionName = `${serviceInstance.constructor.path}.${propertyName}`;
     const fn = serviceInstance[propertyName]();
-    fn.useOpenReducer = !!action.useOpenReducer;
+    fn.useOpenAction = !!action.useOpenAction;
     reducer[actionName] = fn;
     serviceInstance[propertyName] = (payload: any) => {
       reduxService.dispatch({ type: actionName, payload });
@@ -127,15 +121,15 @@ export class MapManager {
     const reducerMethod = (state: any = initial, action: Action) => {
       const op = reducer[action.type];
       if (!op) { return state; }
-      if (op.useOpenReducer) { return op(state, action); }
+      if (op.useOpenAction) { return op(state, action); }
 
       const newState = cloneDeep(state);
-      const payload = cloneDeep(action);
+      const payload = cloneDeep(action.payload);
       op(newState, payload);
       return newState;
 
     };
-    reduxService.addReducer(path, reducerMethod);
+    reduxService.add(path, reducerMethod);
   }
 
   /**

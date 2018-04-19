@@ -61,7 +61,7 @@ The epic function should return an Observable<Action> to continue the epic chain
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { of } from 'rxjs/operators';
-import { Action, rxAction, rxEpic } from '../../redux';
+import { Action, rxAction, rxEpic } from 'angular-redux-services';
 
 export interface State {
   query: string;
@@ -78,7 +78,7 @@ export class SearchExampleService {
   };
 
   @rxAction() query(criteria: string) {
-    return (state: State, action: Action) => {
+    return (state: State, payload: typeof criteria) => {
       state.query = action.payload;
     };
   }
@@ -90,9 +90,9 @@ export class SearchExampleService {
     });
   }
 
-  @rxAction() setResults() {
-    return (state: State, action: Action) => {
-      state.result = action.payload;
+  @rxAction() setResults(results: any[]) {
+    return (state: State, payload: typeof results) => {
+      state.result = payload;
     };
   }
 
@@ -116,7 +116,7 @@ export class SearchExampleModule {
     reduxService: ReduxService, 
     searchExampleService: SearchExampleService) {
 
-    reduxService.addMap(exampleService);
+    reduxService.register(exampleService);
 
   }
 

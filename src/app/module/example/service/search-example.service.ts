@@ -23,8 +23,8 @@ export class SearchExampleService {
   }
 
   @rxAction() query(criteria: string) {
-    return (state: State, action: Action) => {
-      state.query = action.payload;
+    return (state: State, payload: typeof criteria) => {
+      state.query = payload;
     };
   }
 
@@ -35,9 +35,9 @@ export class SearchExampleService {
     });
   }
 
-  @rxAction() setResults() {
-    return (state: State, action: Action) => {
-      state.result = action.payload;
+  @rxAction() setResults(results: any[]) {
+    return (state: State, payload: typeof results) => {
+      state.result = payload;
     };
   }
 

@@ -25,7 +25,7 @@ export class AppModule {
     reduxService.init( {}, [], false /* environment.production */ );
 
     setTimeout(() => {
-      reduxService.addReducer('@search', (state, action) => {
+      reduxService.add('@search', (state, action) => {
         switch (action.type) {
           case 'search':
             return { result: [1, 2, 3] };

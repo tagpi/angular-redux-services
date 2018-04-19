@@ -20,7 +20,7 @@ export class ReduxService {
    * Reducer list.
    */
   private reducers: any = {
-    '@redux-service': (state = {}, action) => action
+    '@redux-service': (state = {}, action) => action.type
   };
 
   /**
@@ -74,16 +74,16 @@ export class ReduxService {
    * @param name Root path for the reducer (@search)
    * @param reducer Reducer method (state, action) => state
    */
-  public addReducer(name, reducer) {
+  public add(name, reducer) {
     this.reducers[name] = reducer;
     this.store.replaceReducer(combineReducers(this.reducers));
   }
 
   /**
-   * Add a redux map.
+   * Registers a redux service instance.
    * @param serviceInstance
    */
-  public addMap(serviceInstance: any) {
+  public register(serviceInstance: any) {
     this.map.add(this, serviceInstance);
   }
 

@@ -1,10 +1,12 @@
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 import { get, isEqual } from 'lodash';
+import { ReduxSubject } from './redux-subject.class';
 
 export class SubscriberManger {
 
   /**
-   * Tracks the active selections.
+   * Tracks the active selections. Each subject gets updated
+   * when broadcast is called.
    */
   private selections: { path?: BehaviorSubject<any> } = { };
 
@@ -17,17 +19,54 @@ export class SubscriberManger {
   }
 
   /**
-   * Get an observable for the state slice.
+   * Returns a redux observable for the state slice.
    * @param path
    */
   public select<T>(path: string): BehaviorSubject<T> {
+
+    let sliceSub: Subscription;
+    const slice = this.setSlice<T>(path);
+
+    const onActivate = () => {
+      slice.links++;
+      sliceSub = slice.subscribe((reply: T) => reduxSubject.next(reply));
+    };
+
+    const onDeactivate = () => {
+      sliceSub.unsubscribe();
+      slice.links--;
+      if (!slice.links) {
+        this.removeSlice(path);
+      }
+    };
+
+    const reduxSubject = new ReduxSubject<T>(slice.value, onActivate, onDeactivate);
+    return reduxSubject;
+
+  }
+
+  /**
+   * Sets the state slice.
+   * @param path
+   */
+  private setSlice<T>(path: string): BehaviorSubject<T> & { links?: number } {
     const sub = this.selections[path];
     if (sub) { return sub; }
 
     const value = get(this.getState(), path);
-    const subj = new BehaviorSubject(value);
-    this.selections[path] = subj;
-    return subj;
+    const slice: BehaviorSubject<T> & { links?: number } = new BehaviorSubject(value);
+    slice.links = 0;
+
+    this.selections[path] = slice;
+    return slice;
+  }
+
+  /**
+   * Clear the slice.
+   * @param path
+   */
+  private removeSlice(path: string) {
+    delete this.selections[path];
   }
 
   /**
