@@ -1,4 +1,4 @@
-import { BehaviorSubject, PartialObserver } from 'rxjs';
+import { BehaviorSubject, PartialObserver, Subscription } from 'rxjs';
 import { baseDirectiveCreate } from '@angular/core/src/render3/instructions';
 
 export class ReduxSubject<T> extends BehaviorSubject<T> {
@@ -14,7 +14,7 @@ export class ReduxSubject<T> extends BehaviorSubject<T> {
 
   }
 
-  subscribe() {
+  subscribe(): Subscription {
 
     // link to
     if (this.active === 0) {

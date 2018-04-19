@@ -1,1 +1,0 @@
-{"version":3,"file":"action.model.js","sourceRoot":"","sources":["action.model.ts"],"names":[],"mappings":"","sourcesContent":["import { Action as ReduxAction } from 'redux';\n\nexport interface Action extends ReduxAction {\n  payload?: any;\n}\n"]}
