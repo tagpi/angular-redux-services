@@ -95,8 +95,8 @@ export class SubscriberManger {
       if (!isEqual(stateValue, subject.getValue())) {
         subject.next(stateValue);
       }
-
     }
+
   }
 
 }

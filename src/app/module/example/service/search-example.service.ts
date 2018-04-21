@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Action, rxAction, rxEpic } from '../../redux';
+import { catchError } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
 export interface State {
   query: string;
@@ -16,10 +18,8 @@ export class SearchExampleService {
     result: []
   };
 
-  @rxAction(true) unsafe(criteria: string) {
-    return (state: State, action: Action) => {
-      return Object.assign({ ...state, query: action.payload });
-    };
+  constructor(private httpClient: HttpClient) {
+
   }
 
   @rxAction() query(criteria: string) {
@@ -28,14 +28,11 @@ export class SearchExampleService {
     };
   }
 
-  @rxEpic('query') callQueryEndPoint(criteria: string) {
-    return of({
-      type: `${SearchExampleService.path}.setResults`,
-      payload: [ 1, 2, 3 ]
-    });
+  @rxEpic('query', 'queryHandler') private queryRequest(criteria: string) {
+    return this.searchEndpoint(criteria);
   }
 
-  @rxAction() setResults(results: any[]) {
+  @rxAction() private queryHandler(results: any[]) {
     return (state: State, payload: typeof results) => {
       state.result = payload;
     };
@@ -44,6 +41,18 @@ export class SearchExampleService {
   @rxAction(true) clear() {
     return (state: State) => {
       return SearchExampleService.initial;
+    };
+  }
+
+  searchEndpoint(criteria: string) {
+    return this.httpClient
+      .post('url', { criteria })
+      .pipe(catchError(result => of(['why', 'i', 'break', '?'])));
+  }
+
+  @rxAction(true) unsafe(criteria: string) {
+    return (state: State, action: Action) => {
+      return Object.assign({ ...state, query: action.payload });
     };
   }
 

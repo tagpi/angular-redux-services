@@ -1,7 +1,7 @@
 import { get, cloneDeep } from 'lodash';
 import { ReduxService } from '../service/redux.service';
 import { Action } from '../model/action.model';
-import { take } from 'rxjs/operators';
+import { take, map } from 'rxjs/operators';
 
 export class MapManager {
 
@@ -97,11 +97,34 @@ export class MapManager {
    * Add an epic.
    */
   private addEpic(reduxService: ReduxService, serviceInstance: any, propertyName: string, epic: any) {
-    const actionName = `${serviceInstance.constructor.path}.${epic.action}`;
-    const list = this.epic[actionName] = this.epic[actionName] || [];
-    list.push((action: Action) => serviceInstance[propertyName](action));
+
+    const actionName = `${serviceInstance.constructor.path}.${epic.source}`;
+    const list = (this.epic[actionName] = this.epic[actionName] || []);
+    const relay = epic.relay && `${serviceInstance.constructor.path}.${epic.relay}`;
+
+    list.push((action: Action) => {
+
+      let epic$ = serviceInstance[propertyName](action);
+
+      if (relay) {
+        epic$ = epic$.pipe(map(result => ({
+          type: relay,
+          payload: result
+        })));
+      }
+
+      epic$ = epic$.pipe(take(1));
+
+      // run the relay action
+      epic$.subscribe(reply => reduxService.dispatch(reply));
+
+    });
+
   }
 
+  /**
+   * Add an action
+   */
   private addAction(reduxService: ReduxService, serviceInstance: any, propertyName: string, action: any, reducer: any) {
     const actionName = `${serviceInstance.constructor.path}.${propertyName}`;
     const fn = serviceInstance[propertyName]();
@@ -146,10 +169,7 @@ export class MapManager {
 
     const epics = this.epic[action.type];
     if (epics) {
-      epics.forEach(epic => epic(action.payload)
-        .pipe(take(1))
-        .subscribe(reply => reduxService.dispatch(reply))
-      );
+      epics.forEach(epicWrapper => epicWrapper());
     }
 
   }

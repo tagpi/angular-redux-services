@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ReduxService } from './module/redux/service/redux.service';
-import { SearchExampleService } from './module/example/service/search-example.service';
 import { Subscription } from 'rxjs';
 
 @Component({

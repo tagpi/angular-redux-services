@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ReduxService } from '../../../redux';
 import { SearchExampleService } from '../../service/search-example.service';
@@ -6,7 +6,8 @@ import { SearchExampleService } from '../../service/search-example.service';
 @Component({
   selector: 'index',
   templateUrl: './index.component.html',
-  styleUrls: ['./index.component.css']
+  styleUrls: ['./index.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class IndexComponent implements OnInit, OnDestroy {
 
@@ -15,8 +16,9 @@ export class IndexComponent implements OnInit, OnDestroy {
 
   constructor(
     public reduxService: ReduxService,
-    public searchExampleService: SearchExampleService) {
-    reduxService.register(searchExampleService);
+    public searchExampleService: SearchExampleService,
+    private changeDetectorRef: ChangeDetectorRef) {
+
   }
 
   ngOnInit() {
@@ -30,7 +32,10 @@ export class IndexComponent implements OnInit, OnDestroy {
     this.subs.push(
       this.reduxService
         .select('@redux-service')
-        .subscribe(state => this.state = state)
+        .subscribe(state => {
+          this.state = state;
+          this.changeDetectorRef.markForCheck();
+        })
     );
   }
 

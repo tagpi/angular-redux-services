@@ -5,6 +5,7 @@ import { AppComponent } from './app.component';
 import { ReduxModule } from './module/redux/redux.module';
 import { ReduxService } from './module/redux/service/redux.service';
 import { routing } from './app.routing';
+import { HttpClientModule } from '@angular/common/http';
 
 
 @NgModule({
@@ -14,7 +15,8 @@ import { routing } from './app.routing';
   imports: [
     routing,
     BrowserModule,
-    ReduxModule
+    ReduxModule,
+    HttpClientModule,
   ],
   providers: [ ],
   bootstrap: [ AppComponent ]
