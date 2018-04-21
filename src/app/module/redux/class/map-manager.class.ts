@@ -105,6 +105,7 @@ export class MapManager {
   private addAction(reduxService: ReduxService, serviceInstance: any, propertyName: string, action: any, reducer: any) {
     const actionName = `${serviceInstance.constructor.path}.${propertyName}`;
     const fn = serviceInstance[propertyName]();
+    if (!fn) { return; }
     fn.useOpenAction = !!action.useOpenAction;
     reducer[actionName] = fn;
     serviceInstance[propertyName] = (payload: any) => {

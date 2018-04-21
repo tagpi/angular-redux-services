@@ -2,7 +2,7 @@ import { __extends, __spread } from 'tslib';
 import { BehaviorSubject } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
 import { take } from 'rxjs/operators';
-import { Injectable, Pipe, ChangeDetectorRef, NgModule } from '@angular/core';
+import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
 import { AsyncPipe, CommonModule } from '@angular/common';
 
@@ -150,6 +150,9 @@ var MapManager = /** @class */ (function () {
     MapManager.prototype.addAction = function (reduxService, serviceInstance, propertyName, action, reducer) {
         var actionName = serviceInstance.constructor.path + "." + propertyName;
         var fn = serviceInstance[propertyName]();
+        if (!fn) {
+            return;
+        }
         fn.useOpenAction = !!action.useOpenAction;
         reducer[actionName] = fn;
         serviceInstance[propertyName] = function (payload) {
@@ -232,9 +235,10 @@ var ReduxService = /** @class */ (function () {
     return ReduxService;
 }());
 ReduxService.decorators = [
-    { type: Injectable },
+    { type: Injectable, args: [{ providedIn: 'root' },] },
 ];
 ReduxService.ctorParameters = function () { return []; };
+ReduxService.ngInjectableDef = defineInjectable({ factory: function ReduxService_Factory() { return new ReduxService(); }, token: ReduxService, providedIn: "root" });
 var RxStatePipe = /** @class */ (function () {
     function RxStatePipe(changeDetectorRef, reduxService) {
         this.changeDetectorRef = changeDetectorRef;
@@ -262,12 +266,6 @@ RxStatePipe.ctorParameters = function () { return [
 var ReduxModule = /** @class */ (function () {
     function ReduxModule() {
     }
-    ReduxModule.forRoot = function () {
-        return {
-            ngModule: ReduxModule,
-            providers: [ReduxService]
-        };
-    };
     return ReduxModule;
 }());
 ReduxModule.decorators = [
@@ -297,5 +295,5 @@ function rxEpic(action) {
     };
 }
 
-export { ReduxModule, ReduxService, rxAction, rxEpic, RxStatePipe as ɵa };
+export { ReduxModule, ReduxService, rxAction, rxEpic, RxStatePipe };
 //# sourceMappingURL=angular-redux-services.js.map

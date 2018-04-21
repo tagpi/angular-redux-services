@@ -200,6 +200,9 @@ var MapManager = /** @class */ (function () {
     MapManager.prototype.addAction = function (reduxService, serviceInstance, propertyName, action, reducer) {
         var actionName = serviceInstance.constructor.path + "." + propertyName;
         var fn = serviceInstance[propertyName]();
+        if (!fn) {
+            return;
+        }
         fn.useOpenAction = !!action.useOpenAction;
         reducer[actionName] = fn;
         serviceInstance[propertyName] = function (payload) {
@@ -282,9 +285,10 @@ var ReduxService = /** @class */ (function () {
     return ReduxService;
 }());
 ReduxService.decorators = [
-    { type: core.Injectable },
+    { type: core.Injectable, args: [{ providedIn: 'root' },] },
 ];
 ReduxService.ctorParameters = function () { return []; };
+ReduxService.ngInjectableDef = core.defineInjectable({ factory: function ReduxService_Factory() { return new ReduxService(); }, token: ReduxService, providedIn: "root" });
 var RxStatePipe = /** @class */ (function () {
     function RxStatePipe(changeDetectorRef, reduxService) {
         this.changeDetectorRef = changeDetectorRef;
@@ -312,12 +316,6 @@ RxStatePipe.ctorParameters = function () { return [
 var ReduxModule = /** @class */ (function () {
     function ReduxModule() {
     }
-    ReduxModule.forRoot = function () {
-        return {
-            ngModule: ReduxModule,
-            providers: [ReduxService]
-        };
-    };
     return ReduxModule;
 }());
 ReduxModule.decorators = [
@@ -351,7 +349,7 @@ exports.ReduxModule = ReduxModule;
 exports.ReduxService = ReduxService;
 exports.rxAction = rxAction;
 exports.rxEpic = rxEpic;
-exports.ɵa = RxStatePipe;
+exports.RxStatePipe = RxStatePipe;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

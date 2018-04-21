@@ -9,35 +9,8 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./app.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent {
   title = 'app';
-  private subs: Subscription[] = [];
-  private state;
 
-  constructor(
-    public reduxService: ReduxService,
-    public searchExampleService: SearchExampleService) {
-
-  }
-
-  ngOnInit() {
-  }
-
-  ngOnDestroy() {
-    this.subs.forEach(sub => sub.unsubscribe());
-  }
-
-  subscribe() {
-    this.subs.push(
-      this.reduxService
-        .select('@redux-service')
-        .subscribe(state => this.state = state)
-    );
-  }
-
-  unsubscribe() {
-    const sub = this.subs.shift();
-    sub.unsubscribe();
-  }
 
 }

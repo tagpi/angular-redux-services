@@ -6,7 +6,7 @@ import { SubscriberManger } from '../class/subscriber-manager.class';
 import { MapManager } from '../class/map-manager.class';
 import { Action } from '../model/action.model';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ReduxService {
 
   public isInitialized = false;

@@ -1,21 +1,2 @@
-
-<h3>Action via Dispatch</h3>
-<button (click)="reduxService.dispatch({type: 'test1'})">test1</button><br>
-<button (click)="reduxService.dispatch({type: 'test2'})">test2</button><br>
-<button (click)="reduxService.dispatch({type: '@search'})">@search</button><br>
-<button (click)="reduxService.dispatch({type: '@search-example.query', payload: 'query via dispatch'})">@search-example.query</button><br>
-<button (click)="reduxService.dispatch({type: '@search-example.unsafe'})">@search-example.unsafe</button><br>
-
-<h3>Action via Service</h3>
-<button (click)="searchExampleService.query('query via service')">@search-example.query</button><br>
-<button (click)="searchExampleService.clear()">@search-example.clear</button><br>
-
-<h3>Select</h3>
-<pre>{{ state | json }}</pre>
-
-
-<button (click)="subscribe()">Subscribe</button>
-<button (click)="unsubscribe()">Unsubscribe</button>
-
-<h3>State Pipe</h3>
-<pre>{{ '@search-example' | rxState | json }}</pre>
+<button [routerLink]="'/example'">Test</button>
+<router-outlet></router-outlet>

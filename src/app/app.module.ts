@@ -4,7 +4,7 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { ReduxModule } from './module/redux/redux.module';
 import { ReduxService } from './module/redux/service/redux.service';
-import { ExampleModule } from './module/example/example.module';
+import { routing } from './app.routing';
 
 
 @NgModule({
@@ -12,9 +12,9 @@ import { ExampleModule } from './module/example/example.module';
     AppComponent
   ],
   imports: [
+    routing,
     BrowserModule,
-    ReduxModule.forRoot(),
-    ExampleModule
+    ReduxModule
   ],
   providers: [ ],
   bootstrap: [ AppComponent ]

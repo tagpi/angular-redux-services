@@ -1,14 +1,19 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SearchExampleService } from './service/search-example.service';
-import { ReduxService } from '../redux';
+import { ReduxService, ReduxModule } from '../redux';
+import { routing } from './example.routing';
+import { IndexComponent } from './view/index/index.component';
 
 @NgModule({
   imports: [
-    CommonModule
+    routing,
+    CommonModule,
+    ReduxModule,
   ],
-  declarations: [],
-  providers: [ SearchExampleService ]
+  declarations: [
+    IndexComponent
+  ],
 })
 export class ExampleModule {
 

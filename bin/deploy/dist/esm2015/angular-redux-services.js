@@ -1,7 +1,7 @@
 import { BehaviorSubject } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
 import { take } from 'rxjs/operators';
-import { Injectable, Pipe, ChangeDetectorRef, NgModule } from '@angular/core';
+import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
 import { AsyncPipe, CommonModule } from '@angular/common';
 
@@ -253,6 +253,9 @@ class MapManager {
     addAction(reduxService, serviceInstance, propertyName, action, reducer) {
         const /** @type {?} */ actionName = `${serviceInstance.constructor.path}.${propertyName}`;
         const /** @type {?} */ fn = serviceInstance[propertyName]();
+        if (!fn) {
+            return;
+        }
         fn.useOpenAction = !!action.useOpenAction;
         reducer[actionName] = fn;
         serviceInstance[propertyName] = (payload) => {
@@ -383,10 +386,11 @@ class ReduxService {
     }
 }
 ReduxService.decorators = [
-    { type: Injectable },
+    { type: Injectable, args: [{ providedIn: 'root' },] },
 ];
 /** @nocollapse */
 ReduxService.ctorParameters = () => [];
+/** @nocollapse */ ReduxService.ngInjectableDef = defineInjectable({ factory: function ReduxService_Factory() { return new ReduxService(); }, token: ReduxService, providedIn: "root" });
 
 /**
  * @fileoverview added by tsickle
@@ -433,15 +437,6 @@ RxStatePipe.ctorParameters = () => [
  * @suppress {checkTypes} checked by tsc
  */
 class ReduxModule {
-    /**
-     * @return {?}
-     */
-    static forRoot() {
-        return {
-            ngModule: ReduxModule,
-            providers: [ReduxService]
-        };
-    }
 }
 ReduxModule.decorators = [
     { type: NgModule, args: [{
@@ -516,5 +511,5 @@ function rxEpic(action) {
  * Generated bundle index. Do not edit.
  */
 
-export { ReduxModule, ReduxService, rxAction, rxEpic, RxStatePipe as ɵa };
+export { ReduxModule, ReduxService, rxAction, rxEpic, RxStatePipe };
 //# sourceMappingURL=angular-redux-services.js.map

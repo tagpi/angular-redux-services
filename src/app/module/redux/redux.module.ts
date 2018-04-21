@@ -10,11 +10,4 @@ import { RxStatePipe } from './pipe/rx-state.pipe';
 })
 export class ReduxModule {
 
-  static forRoot(): ModuleWithProviders {
-    return {
-      ngModule: ReduxModule,
-      providers: [ ReduxService ]
-    };
-  }
-
 }

@@ -7,7 +7,7 @@ export interface State {
   result: any[];
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class SearchExampleService {
 
   static path = '@search-example';
@@ -28,7 +28,7 @@ export class SearchExampleService {
     };
   }
 
-  @rxEpic('query') callQueryEndPoint(action: Action) {
+  @rxEpic('query') callQueryEndPoint(criteria: string) {
     return of({
       type: `${SearchExampleService.path}.setResults`,
       payload: [ 1, 2, 3 ]
