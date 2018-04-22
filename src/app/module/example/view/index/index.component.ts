@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, ChangeDetectorRe
 import { Subscription } from 'rxjs';
 import { ReduxService } from '../../../redux';
 import { SearchExampleService } from '../../service/search-example.service';
+import { SearchExampleSortService } from '../../service/search-example-sort.service';
 
 @Component({
   selector: 'index',
@@ -17,6 +18,7 @@ export class IndexComponent implements OnInit, OnDestroy {
   constructor(
     public reduxService: ReduxService,
     public searchExampleService: SearchExampleService,
+    public searchExampleSortService: SearchExampleSortService,
     private changeDetectorRef: ChangeDetectorRef) {
 
   }

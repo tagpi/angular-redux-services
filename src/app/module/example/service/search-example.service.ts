@@ -3,20 +3,14 @@ import { Observable, of } from 'rxjs';
 import { Action, rxAction, rxEpic } from '../../redux';
 import { catchError } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
+import { State, initial } from '../model/state.model';
 
-export interface State {
-  query: string;
-  result: any[];
-}
 
 @Injectable({ providedIn: 'root' })
 export class SearchExampleService {
 
   static path = '@search-example';
-  static initial: State = {
-    query: '',
-    result: []
-  };
+  static initial = initial;
 
   constructor(private httpClient: HttpClient) {
 
@@ -44,12 +38,14 @@ export class SearchExampleService {
     };
   }
 
-  searchEndpoint(criteria: string) {
+  // regular service
+  private searchEndpoint(criteria: string) {
     return this.httpClient
       .post('url', { criteria })
       .pipe(catchError(result => of(['why', 'i', 'break', '?'])));
   }
 
+  // action using direct state and action references
   @rxAction(true) unsafe(criteria: string) {
     return (state: State, action: Action) => {
       return Object.assign({ ...state, query: action.payload });

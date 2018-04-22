@@ -10,9 +10,11 @@
 <button (click)="searchExampleService.query('query via service')">@search-example.query</button><br>
 <button (click)="searchExampleService.clear()">@search-example.clear</button><br>
 
+<h3>Secondary Service</h3>
+<button (click)="searchExampleSortService.sort()">@search-example.sort</button><br>
+
 <h3>Select</h3>
 <pre>{{ state | json }}</pre>
-
 
 <button (click)="subscribe()">Subscribe</button>
 <button (click)="unsubscribe()">Unsubscribe</button>
