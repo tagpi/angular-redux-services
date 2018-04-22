@@ -147,7 +147,7 @@ var MapManager = /** @class */ (function () {
         var list = (this.epic[actionName] = this.epic[actionName] || []);
         var relay = epic.relay && serviceInstance.constructor.path + "." + epic.relay;
         list.push(function (action) {
-            var epic$ = serviceInstance[propertyName](action);
+            var epic$ = serviceInstance[propertyName](action.payload);
             if (relay) {
                 epic$ = epic$.pipe(map(function (result) { return ({
                     type: relay,
@@ -196,7 +196,7 @@ var MapManager = /** @class */ (function () {
         }
         var epics = this.epic[action.type];
         if (epics) {
-            epics.forEach(function (epicWrapper) { return epicWrapper(); });
+            epics.forEach(function (epicWrapper) { return epicWrapper(action); });
         }
     };
     return MapManager;

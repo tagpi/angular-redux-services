@@ -242,7 +242,7 @@ class MapManager {
         const /** @type {?} */ list = (this.epic[actionName] = this.epic[actionName] || []);
         const /** @type {?} */ relay = epic.relay && `${serviceInstance.constructor.path}.${epic.relay}`;
         list.push((action) => {
-            let /** @type {?} */ epic$ = serviceInstance[propertyName](action);
+            let /** @type {?} */ epic$ = serviceInstance[propertyName](action.payload);
             if (relay) {
                 epic$ = epic$.pipe(map(result => ({
                     type: relay,
@@ -313,7 +313,7 @@ class MapManager {
         }
         const /** @type {?} */ epics = this.epic[action.type];
         if (epics) {
-            epics.forEach(epicWrapper => epicWrapper());
+            epics.forEach(epicWrapper => epicWrapper(action));
         }
     }
 }
