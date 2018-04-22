@@ -1,6 +1,6 @@
 import { BehaviorSubject } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
-import { take } from 'rxjs/operators';
+import { take, map } from 'rxjs/operators';
 import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
 import { AsyncPipe, CommonModule } from '@angular/common';
@@ -238,11 +238,24 @@ class MapManager {
      * @return {?}
      */
     addEpic(reduxService, serviceInstance, propertyName, epic) {
-        const /** @type {?} */ actionName = `${serviceInstance.constructor.path}.${epic.action}`;
-        const /** @type {?} */ list = this.epic[actionName] = this.epic[actionName] || [];
-        list.push((action) => serviceInstance[propertyName](action));
+        const /** @type {?} */ actionName = `${serviceInstance.constructor.path}.${epic.source}`;
+        const /** @type {?} */ list = (this.epic[actionName] = this.epic[actionName] || []);
+        const /** @type {?} */ relay = epic.relay && `${serviceInstance.constructor.path}.${epic.relay}`;
+        list.push((action) => {
+            let /** @type {?} */ epic$ = serviceInstance[propertyName](action);
+            if (relay) {
+                epic$ = epic$.pipe(map(result => ({
+                    type: relay,
+                    payload: result
+                })));
+            }
+            epic$ = epic$.pipe(take(1));
+            // run the relay action
+            epic$.subscribe(reply => reduxService.dispatch(reply));
+        });
     }
     /**
+     * Add an action
      * @param {?} reduxService
      * @param {?} serviceInstance
      * @param {?} propertyName
@@ -300,9 +313,7 @@ class MapManager {
         }
         const /** @type {?} */ epics = this.epic[action.type];
         if (epics) {
-            epics.forEach(epic => epic(action.payload)
-                .pipe(take(1))
-                .subscribe(reply => reduxService.dispatch(reply)));
+            epics.forEach(epicWrapper => epicWrapper());
         }
     }
 }
@@ -480,21 +491,17 @@ function rxAction(useOpenAction = false, useCompleteAction = false) {
  */
 /**
  * Configure an epic.
- * \@epic(action) fnName(payload) {
- *  return Observable.of({
- *    type: `${SearchExampleService.path}.setResults`,
- *    payload: [ 1, 2, 3 ]
- * });
+ * \@epic(source, relay) fnName(payload) {
+ *  return Observable.of([ 1, 2, 3 ]);
  * }
- * @param {?} action The action name to create the epic on.
+ * @param {?} source The action name to create the epic on.
+ * @param {?=} relay The action name to call once the epic completes.
  * @return {?}
  */
-function rxEpic(action) {
+function rxEpic(source, relay) {
     return function (target, propertyKey, descriptor) {
         target[propertyKey]['__rx__'] = target['__rx__'] || {};
-        target[propertyKey]['__rx__'].epic = {
-            action: `${action}`,
-        };
+        target[propertyKey]['__rx__'].epic = { source, relay };
     };
 }
 

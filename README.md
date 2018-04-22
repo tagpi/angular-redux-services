@@ -52,15 +52,16 @@ By default, the parameters of reducer function have been cloned to allow direct 
 
 To use the original behaviour for reducers where state has to be replaced within the reducer and a return state is required, set the (@param useOpenAction) to true.
 
-rxEpic() will be called when (@param query) action has been dispatched. rxEpic will only be called when the action was dispatched through ReduxService. Having the action in other places such as Redux Devtools will not trigger this.
+rxEpic(action, relayTo) will be called when the action parameter has been dispatched. rxEpic will only be called when the action was dispatched through ReduxService. Having the action in other places such as Redux Devtools will not trigger this. 
 
-The epic function should return an Observable<Action> to continue the epic chain.
+Once the observable completes, an action of type (@param relayTo) will be dispatched with the observable result as the payload. If (@param relayTo) is not provided, the observable returned should be an Action.
 
 ```typescript
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import { of } from 'rxjs/operators';
-import { Action, rxAction, rxEpic } from 'angular-redux-services';
+import { Observable, of } from 'rxjs';
+import { Action, rxAction, rxEpic } from '../../redux';
+import { catchError } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
 export interface State {
   query: string;
@@ -76,20 +77,21 @@ export class SearchExampleService {
     result: []
   };
 
+  constructor(private httpClient: HttpClient) {
+
+  }
+
   @rxAction() query(criteria: string) {
     return (state: State, payload: typeof criteria) => {
-      state.query = action.payload;
+      state.query = payload;
     };
   }
 
-  @rxEpic('query') callQueryEndPoint(criteria: string) {
-    return of({
-      type: `${SearchExampleService.path}.setResults`,
-      payload: [ 1, 2, 3 ]
-    });
+  @rxEpic('query', 'queryHandler') private queryRequest(criteria: string) {
+    return this.searchEndpoint(criteria);
   }
 
-  @rxAction() setResults(results: any[]) {
+  @rxAction() private queryHandler(results: any[]) {
     return (state: State, payload: typeof results) => {
       state.result = payload;
     };
@@ -98,6 +100,20 @@ export class SearchExampleService {
   @rxAction(true) clear() {
     return (state: State) => {
       return SearchExampleService.initial;
+    };
+  }
+
+  // regular service method
+  private searchEndpoint(criteria: string) {
+    return this.httpClient
+      .post('url', { criteria })
+      .pipe(catchError(result => of(['why', 'i', 'break', '?'])));
+  }
+
+  // using direct state and action references
+  @rxAction(true) unsafe(criteria: string) {
+    return (state: State, action: Action) => {
+      return Object.assign({ ...state, query: action.payload });
     };
   }
 

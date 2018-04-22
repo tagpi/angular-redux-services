@@ -1,7 +1,7 @@
 import { __extends, __spread } from 'tslib';
 import { BehaviorSubject } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
-import { take } from 'rxjs/operators';
+import { take, map } from 'rxjs/operators';
 import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
 import { AsyncPipe, CommonModule } from '@angular/common';
@@ -143,9 +143,20 @@ var MapManager = /** @class */ (function () {
         }
     };
     MapManager.prototype.addEpic = function (reduxService, serviceInstance, propertyName, epic) {
-        var actionName = serviceInstance.constructor.path + "." + epic.action;
-        var list = this.epic[actionName] = this.epic[actionName] || [];
-        list.push(function (action) { return serviceInstance[propertyName](action); });
+        var actionName = serviceInstance.constructor.path + "." + epic.source;
+        var list = (this.epic[actionName] = this.epic[actionName] || []);
+        var relay = epic.relay && serviceInstance.constructor.path + "." + epic.relay;
+        list.push(function (action) {
+            var epic$ = serviceInstance[propertyName](action);
+            if (relay) {
+                epic$ = epic$.pipe(map(function (result) { return ({
+                    type: relay,
+                    payload: result
+                }); }));
+            }
+            epic$ = epic$.pipe(take(1));
+            epic$.subscribe(function (reply) { return reduxService.dispatch(reply); });
+        });
     };
     MapManager.prototype.addAction = function (reduxService, serviceInstance, propertyName, action, reducer) {
         var actionName = serviceInstance.constructor.path + "." + propertyName;
@@ -185,9 +196,7 @@ var MapManager = /** @class */ (function () {
         }
         var epics = this.epic[action.type];
         if (epics) {
-            epics.forEach(function (epic) { return epic(action.payload)
-                .pipe(take(1))
-                .subscribe(function (reply) { return reduxService.dispatch(reply); }); });
+            epics.forEach(function (epicWrapper) { return epicWrapper(); });
         }
     };
     return MapManager;
@@ -286,12 +295,10 @@ function rxAction(useOpenAction, useCompleteAction) {
         };
     };
 }
-function rxEpic(action) {
+function rxEpic(source, relay) {
     return function (target, propertyKey, descriptor) {
         target[propertyKey]['__rx__'] = target['__rx__'] || {};
-        target[propertyKey]['__rx__'].epic = {
-            action: "" + action,
-        };
+        target[propertyKey]['__rx__'].epic = { source: source, relay: relay };
     };
 }
 
