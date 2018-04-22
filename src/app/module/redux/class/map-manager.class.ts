@@ -104,7 +104,7 @@ export class MapManager {
 
     list.push((action: Action) => {
 
-      let epic$ = serviceInstance[propertyName](action);
+      let epic$ = serviceInstance[propertyName](action.payload);
 
       if (relay) {
         epic$ = epic$.pipe(map(result => ({
@@ -169,7 +169,7 @@ export class MapManager {
 
     const epics = this.epic[action.type];
     if (epics) {
-      epics.forEach(epicWrapper => epicWrapper());
+      epics.forEach(epicWrapper => epicWrapper(action));
     }
 
   }

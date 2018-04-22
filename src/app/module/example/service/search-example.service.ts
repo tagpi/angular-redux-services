@@ -23,6 +23,7 @@ export class SearchExampleService {
   }
 
   @rxEpic('query', 'queryHandler') private queryRequest(criteria: string) {
+    console.log('queryh', criteria);
     return this.searchEndpoint(criteria);
   }
 
