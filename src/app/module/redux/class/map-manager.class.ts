@@ -1,7 +1,8 @@
 import { get, cloneDeep } from 'lodash';
 import { ReduxService } from '../service/redux.service';
 import { Action } from '../model/action.model';
-import { take, map } from 'rxjs/operators';
+import { take, map, flatMap } from 'rxjs/operators';
+import { Observable, Observer, Subscription } from 'rxjs';
 
 export class MapManager {
 
@@ -99,26 +100,45 @@ export class MapManager {
   private addEpic(reduxService: ReduxService, serviceInstance: any, propertyName: string, epic: any) {
 
     const actionName = `${serviceInstance.constructor.path}.${epic.source}`;
-    const list = (this.epic[actionName] = this.epic[actionName] || []);
+    this.epic[actionName] = this.epic[actionName] || [];
+
+    // create single observable for the epic instance
+    // warning: this observer is never destroyed
+    let observer: Observer<any>;
+    let observable = Observable.create(_observer => {
+      observer = _observer;
+    })
+
+    // return the observabel from the epic function
+    .pipe(flatMap(action => serviceInstance[propertyName](action)));
+
+    // add the relay output if provided
     const relay = epic.relay && `${serviceInstance.constructor.path}.${epic.relay}`;
+    if (relay) {
+      observable = observable.pipe(map(result => ({
+        type: relay,
+        payload: result
+      })));
+    }
 
-    list.push((action: Action) => {
+    const cancelable = epic.cancelable && `${serviceInstance.constructor.path}.${epic.cancelable}`;
+    let sub: Subscription;
 
-      let epic$ = serviceInstance[propertyName](action.payload);
+    // emit from epic
+    if (cancelable) {
+      this.epic[actionName].push((action: Action) => {
+        if (sub) { sub.unsubscribe(); }
+        sub = observable.subscribe(payload => reduxService.dispatch(payload));
+        observer.next(action.payload);
+      });
 
-      if (relay) {
-        epic$ = epic$.pipe(map(result => ({
-          type: relay,
-          payload: result
-        })));
-      }
-
-      epic$ = epic$.pipe(take(1));
-
-      // run the relay action
-      epic$.subscribe(reply => reduxService.dispatch(reply));
-
-    });
+    // single stream observable
+    } else {
+      sub = observable.subscribe(payload => reduxService.dispatch(payload));
+      this.epic[actionName].push((action: Action) => {
+        observer.next(action.payload);
+      });
+    }
 
   }
 

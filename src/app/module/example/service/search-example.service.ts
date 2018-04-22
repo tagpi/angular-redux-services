@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Action, rxAction, rxEpic } from '../../redux';
-import { catchError } from 'rxjs/operators';
+import { catchError, delay } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { State, initial } from '../model/state.model';
 
@@ -22,9 +22,10 @@ export class SearchExampleService {
     };
   }
 
-  @rxEpic('query', 'queryHandler') private queryRequest(criteria: string) {
-    console.log('queryh', criteria);
-    return this.searchEndpoint(criteria);
+  @rxEpic('query', 'queryHandler', false) private queryRequest(criteria: string) {
+    return this
+      .searchEndpoint(criteria)
+      .pipe(delay(2000));
   }
 
   @rxAction() private queryHandler(results: any[]) {

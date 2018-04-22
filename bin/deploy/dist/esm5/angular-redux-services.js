@@ -1,7 +1,7 @@
 import { __extends, __spread } from 'tslib';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
-import { take, map } from 'rxjs/operators';
+import { map, flatMap } from 'rxjs/operators';
 import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
 import { AsyncPipe, CommonModule } from '@angular/common';
@@ -144,19 +144,36 @@ var MapManager = /** @class */ (function () {
     };
     MapManager.prototype.addEpic = function (reduxService, serviceInstance, propertyName, epic) {
         var actionName = serviceInstance.constructor.path + "." + epic.source;
-        var list = (this.epic[actionName] = this.epic[actionName] || []);
+        this.epic[actionName] = this.epic[actionName] || [];
+        var observer;
+        var observable = Observable.create(function (_observer) {
+            observer = _observer;
+        })
+            .pipe(flatMap(function (action) { return serviceInstance[propertyName](action); }));
         var relay = epic.relay && serviceInstance.constructor.path + "." + epic.relay;
-        list.push(function (action) {
-            var epic$ = serviceInstance[propertyName](action.payload);
-            if (relay) {
-                epic$ = epic$.pipe(map(function (result) { return ({
-                    type: relay,
-                    payload: result
-                }); }));
-            }
-            epic$ = epic$.pipe(take(1));
-            epic$.subscribe(function (reply) { return reduxService.dispatch(reply); });
-        });
+        if (relay) {
+            observable = observable.pipe(map(function (result) { return ({
+                type: relay,
+                payload: result
+            }); }));
+        }
+        var cancelable = epic.cancelable && serviceInstance.constructor.path + "." + epic.cancelable;
+        var sub;
+        if (cancelable) {
+            this.epic[actionName].push(function (action) {
+                if (sub) {
+                    sub.unsubscribe();
+                }
+                sub = observable.subscribe(function (payload) { return reduxService.dispatch(payload); });
+                observer.next(action.payload);
+            });
+        }
+        else {
+            sub = observable.subscribe(function (payload) { return reduxService.dispatch(payload); });
+            this.epic[actionName].push(function (action) {
+                observer.next(action.payload);
+            });
+        }
     };
     MapManager.prototype.addAction = function (reduxService, serviceInstance, propertyName, action, reducer) {
         var actionName = serviceInstance.constructor.path + "." + propertyName;
@@ -295,10 +312,11 @@ function rxAction(useOpenAction, useCompleteAction) {
         };
     };
 }
-function rxEpic(source, relay) {
+function rxEpic(source, relay, cancelable) {
+    if (cancelable === void 0) { cancelable = true; }
     return function (target, propertyKey, descriptor) {
         target[propertyKey]['__rx__'] = target['__rx__'] || {};
-        target[propertyKey]['__rx__'].epic = { source: source, relay: relay };
+        target[propertyKey]['__rx__'].epic = { source: source, relay: relay, cancelable: cancelable };
     };
 }
 

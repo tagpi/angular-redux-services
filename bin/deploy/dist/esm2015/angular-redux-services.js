@@ -1,6 +1,6 @@
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
-import { take, map } from 'rxjs/operators';
+import { map, flatMap } from 'rxjs/operators';
 import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
 import { AsyncPipe, CommonModule } from '@angular/common';
@@ -239,20 +239,41 @@ class MapManager {
      */
     addEpic(reduxService, serviceInstance, propertyName, epic) {
         const /** @type {?} */ actionName = `${serviceInstance.constructor.path}.${epic.source}`;
-        const /** @type {?} */ list = (this.epic[actionName] = this.epic[actionName] || []);
+        this.epic[actionName] = this.epic[actionName] || [];
+        // create single observable for the epic instance
+        // warning: this observer is never destroyed
+        let /** @type {?} */ observer;
+        let /** @type {?} */ observable = Observable.create(_observer => {
+            observer = _observer;
+        })
+            .pipe(flatMap(action => serviceInstance[propertyName](action)));
+        // add the relay output if provided
         const /** @type {?} */ relay = epic.relay && `${serviceInstance.constructor.path}.${epic.relay}`;
-        list.push((action) => {
-            let /** @type {?} */ epic$ = serviceInstance[propertyName](action.payload);
-            if (relay) {
-                epic$ = epic$.pipe(map(result => ({
-                    type: relay,
-                    payload: result
-                })));
-            }
-            epic$ = epic$.pipe(take(1));
-            // run the relay action
-            epic$.subscribe(reply => reduxService.dispatch(reply));
-        });
+        if (relay) {
+            observable = observable.pipe(map(result => ({
+                type: relay,
+                payload: result
+            })));
+        }
+        const /** @type {?} */ cancelable = epic.cancelable && `${serviceInstance.constructor.path}.${epic.cancelable}`;
+        let /** @type {?} */ sub;
+        // emit from epic
+        if (cancelable) {
+            this.epic[actionName].push((action) => {
+                if (sub) {
+                    sub.unsubscribe();
+                }
+                sub = observable.subscribe(payload => reduxService.dispatch(payload));
+                observer.next(action.payload);
+            });
+            // single stream observable
+        }
+        else {
+            sub = observable.subscribe(payload => reduxService.dispatch(payload));
+            this.epic[actionName].push((action) => {
+                observer.next(action.payload);
+            });
+        }
     }
     /**
      * Add an action
@@ -496,12 +517,13 @@ function rxAction(useOpenAction = false, useCompleteAction = false) {
  * }
  * @param {?} source The action name to create the epic on.
  * @param {?=} relay The action name to call once the epic completes.
+ * @param {?=} cancelable The epic will unsubscribe then subscribe every emit.
  * @return {?}
  */
-function rxEpic(source, relay) {
+function rxEpic(source, relay, cancelable = true) {
     return function (target, propertyKey, descriptor) {
         target[propertyKey]['__rx__'] = target['__rx__'] || {};
-        target[propertyKey]['__rx__'].epic = { source, relay };
+        target[propertyKey]['__rx__'].epic = { source, relay, cancelable };
     };
 }
 
