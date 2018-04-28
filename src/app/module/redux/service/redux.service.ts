@@ -83,8 +83,11 @@ export class ReduxService {
    * Registers a redux service instance.
    * @param serviceInstance
    */
-  public register(serviceInstance: any) {
-    this.map.add(this, serviceInstance);
+  public register(...services: any[]) {
+    if (arguments && arguments.length) {
+      const args = Array.from(arguments);
+      args.forEach(service => service && this.map.add(this, service));
+    }
   }
 
   /**

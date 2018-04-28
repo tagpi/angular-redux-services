@@ -6,6 +6,7 @@ import { routing } from './example.routing';
 import { IndexComponent } from './view/index/index.component';
 import { SearchExampleSortService } from './service/search-example-sort.service';
 import { RouterTestComponent } from './view/router-test/router-test.component';
+import { SearchConstructService } from './service/search-construct.service';
 
 @NgModule({
   imports: [
@@ -23,10 +24,14 @@ export class ExampleModule {
   constructor(
     reduxService: ReduxService,
     searchExampleService: SearchExampleService,
-    searchExampleSortService: SearchExampleSortService) {
+    searchExampleSortService: SearchExampleSortService,
+    searchConstructService: SearchConstructService) {
 
-    reduxService.register(searchExampleService);
-    reduxService.register(searchExampleSortService);
+    reduxService.register(
+      searchExampleService,
+      searchExampleSortService,
+      searchConstructService
+    );
 
   }
 
