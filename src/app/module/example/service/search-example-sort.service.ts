@@ -8,6 +8,7 @@ import { delay, merge } from 'rxjs/operators';
 export class SearchExampleSortService {
 
   static path = '@search-example';
+  static initial = initial;
 
   @rxAction() sort(criteria: string) {
     return (state: State, payload: typeof criteria) => {

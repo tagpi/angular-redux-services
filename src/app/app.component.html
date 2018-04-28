@@ -1,4 +1,7 @@
 <button [routerLink]="'/example'">Test</button>
 <button [routerLink]="['/example/router']">Test Router</button>
 <button [routerLink]="['/example/router', { timeout: true }]">Test Timeout</button>
+<button (click)="reduxService.reset()">Reset</button>
+<button (click)="log()">console.log</button>
+<pre>{{ '@redux-service' | rxState | json }} </pre>
 <router-outlet></router-outlet>

@@ -11,6 +11,7 @@ export class SearchConstructService {
 
   static path = '@search-construct';
   static initial = {};
+  static preserve = true;
 
   constructor(private reduxService: ReduxService) {
     this.select().subscribe(state => console.log('construct', state));

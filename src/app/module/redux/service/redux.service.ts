@@ -9,6 +9,11 @@ import { Action } from '../model/action.model';
 @Injectable({ providedIn: 'root' })
 export class ReduxService {
 
+  private get reduxServiceName() {
+    return '@redux-service';
+  }
+
+  public resetActionType = '@@RESET';
   public isInitialized = false;
 
   /**
@@ -20,7 +25,7 @@ export class ReduxService {
    * Reducer list.
    */
   private reducers: any = {
-    '@redux-service': (state = {}, action) => action.type
+    [this.reduxServiceName]: (state = {}, action) => action.type
   };
 
   /**
@@ -51,7 +56,7 @@ export class ReduxService {
     const composeMiddleware = (!isProduction && window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__']) || compose;
     const loadedMiddleware = composeMiddleware(applyMiddleware(
       ...middleware,
-      this.subscriber.createMiddleware()
+      this.subscriber.createMiddleware(),
     ));
 
     // create store
@@ -115,5 +120,14 @@ export class ReduxService {
   }
 
 
+  /**
+   * Returns all slices to initial setup.
+   */
+  public reset(clearPreserve = false) {
+    this.dispatch({
+      type: this.resetActionType,
+      payload: { clearPreserve }
+    });
+  }
 
 }

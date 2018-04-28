@@ -11,5 +11,12 @@ import { Subscription } from 'rxjs';
 export class AppComponent {
   title = 'app';
 
+  constructor(private reduxService: ReduxService) {
+
+  }
+
+  log() {
+    console.log(this.reduxService);
+  }
 
 }

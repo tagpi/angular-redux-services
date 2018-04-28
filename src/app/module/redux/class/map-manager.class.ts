@@ -87,6 +87,9 @@ export class MapManager {
       });
     }
 
+    // create reset action
+    this.addResetAction(reduxService, serviceInstance, reducer);
+
     // finalize reducer
     if (Object.keys(reducer).length) {
       this.addReducer(reduxService, serviceInstance, reducer);
@@ -160,7 +163,7 @@ export class MapManager {
    * Add a reducer.
    */
   private addReducer(reduxService: ReduxService, serviceInstance: any, reducer: any) {
-    const path = serviceInstance.constructor.path;
+    const { path, preserve } = serviceInstance.constructor;
     const initial = serviceInstance.constructor.initial || {};
     const reducerMethod = (state: any = initial, action: Action) => {
       const op = reducer[action.type];
@@ -173,6 +176,7 @@ export class MapManager {
       return newState;
 
     };
+    reducerMethod['config'] = { path, preserve };
     reduxService.add(path, reducerMethod);
   }
 
@@ -191,6 +195,31 @@ export class MapManager {
     if (epics) {
       epics.forEach(epicWrapper => epicWrapper(action));
     }
+
+  }
+
+  /**
+   * Creates the reset action.
+   */
+  private addResetAction(reduxService: ReduxService, serviceInstance: any, reducer: any) {
+
+    // do not create reset action if it has been overriden
+    const keys = Object.getOwnPropertyNames(serviceInstance.constructor.prototype);
+    if (keys.find(key => key === reduxService.resetActionType)) {
+      return;
+    }
+
+    // do not create a reset action if preserve is set
+    if (serviceInstance.constructor.preserve) {
+      return;
+    }
+
+    // reset to initial
+    const action = () => {
+      return serviceInstance.constructor.initial || {};
+    };
+    action['useOpenAction'] = true;
+    reducer[reduxService.resetActionType] = action;
 
   }
 
