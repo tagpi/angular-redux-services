@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Action, rxAction, rxEpic } from '../../redux';
+import { Action, rxAction, rxEpic, ReduxService } from '../../redux';
 import { catchError, delay } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { State, initial } from '../model/state.model';
@@ -12,8 +12,14 @@ export class SearchExampleService {
   static path = '@search-example';
   static initial = initial;
 
-  constructor(private httpClient: HttpClient) {
+  constructor(
+    private httpClient: HttpClient,
+    private reduxService: ReduxService) {
 
+  }
+
+  select() {
+    return this.reduxService.select<State>(SearchExampleService.path);
   }
 
   @rxAction() query(criteria: string) {

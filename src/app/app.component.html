@@ -1,2 +1,4 @@
 <button [routerLink]="'/example'">Test</button>
+<button [routerLink]="['/example/router']">Test Router</button>
+<button [routerLink]="['/example/router', { timeout: true }]">Test Timeout</button>
 <router-outlet></router-outlet>

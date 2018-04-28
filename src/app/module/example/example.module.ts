@@ -5,6 +5,7 @@ import { ReduxService, ReduxModule } from '../redux';
 import { routing } from './example.routing';
 import { IndexComponent } from './view/index/index.component';
 import { SearchExampleSortService } from './service/search-example-sort.service';
+import { RouterTestComponent } from './view/router-test/router-test.component';
 
 @NgModule({
   imports: [
@@ -13,7 +14,8 @@ import { SearchExampleSortService } from './service/search-example-sort.service'
     ReduxModule,
   ],
   declarations: [
-    IndexComponent
+    IndexComponent,
+    RouterTestComponent
   ],
 })
 export class ExampleModule {
