@@ -343,7 +343,6 @@ var ReduxService = /** @class */ (function () {
         this.store = redux.createStore(redux.combineReducers(this.reducers), preloadedState, loadedMiddleware);
         this.isInitialized = true;
         this.map.init(this);
-        this.select(this.reduxServiceName).subscribe();
     };
     ReduxService.prototype.add = function (name, reducer) {
         this.reducers[name] = reducer;
@@ -388,16 +387,19 @@ var RxStatePipe = /** @class */ (function () {
     function RxStatePipe(changeDetectorRef, reduxService) {
         this.changeDetectorRef = changeDetectorRef;
         this.reduxService = reduxService;
-        this.async = new common.AsyncPipe(this.changeDetectorRef);
     }
     RxStatePipe.prototype.transform = function (value) {
         var _this = this;
-        var select = this.reduxService.select(value);
-        this.sub = select.subscribe(function () { return _this.changeDetectorRef.markForCheck(); });
-        return this.async.transform(select);
+        this.ngOnDestroy();
+        this.sub = this.reduxService
+            .select(value)
+            .subscribe(function (innerValue) {
+            _this.changeDetectorRef.markForCheck();
+            _this.value = innerValue;
+        });
+        return this.value;
     };
     RxStatePipe.prototype.ngOnDestroy = function () {
-        this.async.ngOnDestroy();
         if (this.sub) {
             this.sub.unsubscribe();
         }

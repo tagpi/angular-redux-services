@@ -3,7 +3,7 @@ import { get, isEqual, cloneDeep } from 'lodash';
 import { map, flatMap, filter, switchMap } from 'rxjs/operators';
 import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
-import { AsyncPipe, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 
 /**
  * @fileoverview added by tsickle
@@ -438,8 +438,6 @@ class ReduxService {
         this.isInitialized = true;
         // initialize map with newly created store
         this.map.init(this);
-        // TODO: find why first subscribe does not work
-        this.select(this.reduxServiceName).subscribe();
     }
     /**
      * Add a reducer.
@@ -518,22 +516,25 @@ class RxStatePipe {
     constructor(changeDetectorRef, reduxService) {
         this.changeDetectorRef = changeDetectorRef;
         this.reduxService = reduxService;
-        this.async = new AsyncPipe(this.changeDetectorRef);
     }
     /**
      * @param {?} value
      * @return {?}
      */
     transform(value) {
-        const /** @type {?} */ select = this.reduxService.select(value);
-        this.sub = select.subscribe(() => this.changeDetectorRef.markForCheck());
-        return this.async.transform(select);
+        this.ngOnDestroy();
+        this.sub = this.reduxService
+            .select(value)
+            .subscribe(innerValue => {
+            this.changeDetectorRef.markForCheck();
+            this.value = innerValue;
+        });
+        return this.value;
     }
     /**
      * @return {?}
      */
     ngOnDestroy() {
-        this.async.ngOnDestroy();
         if (this.sub) {
             this.sub.unsubscribe();
         }

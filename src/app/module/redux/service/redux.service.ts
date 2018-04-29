@@ -70,9 +70,6 @@ export class ReduxService {
     // initialize map with newly created store
     this.map.init(this);
 
-    // TODO: find why first subscribe does not work
-    this.select(this.reduxServiceName).subscribe();
-
   }
 
   /**

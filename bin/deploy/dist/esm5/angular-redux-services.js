@@ -4,7 +4,7 @@ import { get, isEqual, cloneDeep } from 'lodash';
 import { map, flatMap, filter, switchMap } from 'rxjs/operators';
 import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
-import { AsyncPipe, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 
 var ReduxSubject = /** @class */ (function (_super) {
     __extends(ReduxSubject, _super);
@@ -293,7 +293,6 @@ var ReduxService = /** @class */ (function () {
         this.store = createStore(combineReducers(this.reducers), preloadedState, loadedMiddleware);
         this.isInitialized = true;
         this.map.init(this);
-        this.select(this.reduxServiceName).subscribe();
     };
     ReduxService.prototype.add = function (name, reducer) {
         this.reducers[name] = reducer;
@@ -338,16 +337,19 @@ var RxStatePipe = /** @class */ (function () {
     function RxStatePipe(changeDetectorRef, reduxService) {
         this.changeDetectorRef = changeDetectorRef;
         this.reduxService = reduxService;
-        this.async = new AsyncPipe(this.changeDetectorRef);
     }
     RxStatePipe.prototype.transform = function (value) {
         var _this = this;
-        var select = this.reduxService.select(value);
-        this.sub = select.subscribe(function () { return _this.changeDetectorRef.markForCheck(); });
-        return this.async.transform(select);
+        this.ngOnDestroy();
+        this.sub = this.reduxService
+            .select(value)
+            .subscribe(function (innerValue) {
+            _this.changeDetectorRef.markForCheck();
+            _this.value = innerValue;
+        });
+        return this.value;
     };
     RxStatePipe.prototype.ngOnDestroy = function () {
-        this.async.ngOnDestroy();
         if (this.sub) {
             this.sub.unsubscribe();
         }
