@@ -97,16 +97,15 @@ export class SearchExampleModule {
 # Documentation
 
 ## Core
-* [Redux Map Service Configuration](https://github.com/tagpi/angular-redux-services/blob/master/doc/service.md)
-
-* [Epic / Effect](https://github.com/tagpi/angular-redux-services/blob/master/doc/epic.md)
+* [Service](https://github.com/tagpi/angular-redux-services/blob/master/doc/service.md)
 
 * [Action](https://github.com/tagpi/angular-redux-services/blob/master/doc/action.md)
 
+* [Epic / Effect](https://github.com/tagpi/angular-redux-services/blob/master/doc/epic.md)
 
 ## Added Features
 * [Multiple Service Files](https://github.com/tagpi/angular-redux-services/blob/master/doc/multiple-service.md)
 
-* [Reset](https://github.com/tagpi/angular-redux-services/blob/master/doc/reset.md)
+* [State Reset](https://github.com/tagpi/angular-redux-services/blob/master/doc/reset.md)
 
 * [Resolver](https://github.com/tagpi/angular-redux-services/blob/master/doc/resolver.md)
