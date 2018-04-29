@@ -1,5 +1,7 @@
 # Simplified Redux in Angular
 
+[https://github.com/tagpi/angular-redux-services]
+
 ## Setup
 
 * Install the library 
@@ -96,16 +98,15 @@ export class SearchExampleModule {
 
 # Documentation
 
-## Core
-* [Service](https://github.com/tagpi/angular-redux-services/blob/master/doc/service.md)
+* [Service](https://github.com/tagpi/angular-redux-services/blob/master/doc/service.md) - service setup 
 
-* [Action](https://github.com/tagpi/angular-redux-services/blob/master/doc/action.md)
+* [Action](https://github.com/tagpi/angular-redux-services/blob/master/doc/action.md) - action creation and configuration
 
-* [Epic / Effect](https://github.com/tagpi/angular-redux-services/blob/master/doc/epic.md)
+* [Epic / Effect](https://github.com/tagpi/angular-redux-services/blob/master/doc/epic.md) - epic creation and configuration
 
 ## Added Features
-* [Multiple Service Files](https://github.com/tagpi/angular-redux-services/blob/master/doc/multiple-service.md)
+* [Multiple Service Files](https://github.com/tagpi/angular-redux-services/blob/master/doc/multiple-service.md) - breakdown large services into multiple services
 
-* [State Reset](https://github.com/tagpi/angular-redux-services/blob/master/doc/reset.md)
+* [State Reset](https://github.com/tagpi/angular-redux-services/blob/master/doc/reset.md) - built in application wide reset 
 
-* [Resolver](https://github.com/tagpi/angular-redux-services/blob/master/doc/resolver.md)
+* [Resolver](https://github.com/tagpi/angular-redux-services/blob/master/doc/resolver.md) - creating resolvers based on state

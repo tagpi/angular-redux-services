@@ -1,10 +1,16 @@
 # Simplified Redux in Angular
 
+[https://github.com/tagpi/angular-redux-services]
+
 ## Setup
 
-- npm install --save angular-redux-service
-- import ReduxModule into the main module (app.module)
-- run reduxService.init
+* Install the library 
+```
+npm install --save angular-redux-service
+```
+
+* Import ReduxModule in app.module
+* Initialize the ReduxService
 
 ```typescript
 import { ReduxModule, ReduxService } from 'angular-redux-service';
@@ -33,36 +39,9 @@ The rxState pipe is an async pipe that will return the state represented by the 
 
 The Redux Map Service is an Angular service that is used to configure the reducer and epics.
 
-The static path property is the root property where the reducer will be set. It is also used to identify the actions (ie. @statePath.actionName).
-
-The static initial property will be the default state of the reducer.
-
-rxAction() creates a reducer function for the action. The rxAction method will be replaced with a dispatch call method once the service is mapped to redux. Calling the method from the service will be the same as dispatching the action. The following calls will be the same:
-
 ```typescript
-searchService.query('abc');
 
-store.dispatch({ 
-  type:'@search.query', 
-  payload: 'abc'
-}));
-```
-
-By default, the parameters of reducer function have been cloned to allow direct application of changes to the state. The reducer function does not require to return the state object. Any return value will be ignored.
-
-To use the original behaviour for reducers where state has to be replaced within the reducer and a return state is required, set the (@param useOpenAction) to true.
-
-rxEpic(action, relayTo) will be called when the action parameter has been dispatched. rxEpic will only be called when the action was dispatched through ReduxService. Having the action in other places such as Redux Devtools will not trigger this. 
-
-Once the observable completes, an action of type (@param relayTo) will be dispatched with the observable result as the payload. If (@param relayTo) is not provided, the observable returned should be an Action.
-
-```typescript
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { Action, rxAction, rxEpic } from '../../redux';
-import { catchError } from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
-
+// state slice interface
 export interface State {
   query: string;
   result: any[];
@@ -71,69 +50,63 @@ export interface State {
 @Injectable({ providedIn: 'root' })
 export class SearchExampleService {
 
+  // state slice path
   static path = '@search-example';
+
+  // default value
   static initial: State = {
     query: '',
     result: []
   };
 
-  constructor(private httpClient: HttpClient) {
-
-  }
-
+  // create the action '@search-example.query'
+  // * this will be replaced with a dispatch action upon initialization
+  // * the state and payload have been cloned for immutability
   @rxAction() query(criteria: string) {
     return (state: State, payload: typeof criteria) => {
       state.query = payload;
     };
   }
 
+  // create an epic or effect
+  // * triggered from 'query'
+  // * will call the 'queryHandler' 
   @rxEpic('query', 'queryHandler') private queryRequest(criteria: string) {
-    return this.searchEndpoint(criteria);
+    return of([ { name: 'result #1' }]);
   }
 
+  // create the action '@search-example.queryHandler'
   @rxAction() private queryHandler(results: any[]) {
     return (state: State, payload: typeof results) => {
       state.result = payload;
     };
   }
 
-  @rxAction({ direct: true }) clear() {
-    return (state: State) => {
-      return SearchExampleService.initial;
-    };
-  }
-
-  // regular service method
-  private searchEndpoint(criteria: string) {
-    return this.httpClient
-      .post('url', { criteria })
-      .pipe(catchError(result => of(['why', 'i', 'break', '?'])));
-  }
-
-  // using direct state and action references
-  @rxAction({ direct: true }) unsafe(criteria: string) {
-    return (state: State, action: Action) => {
-      return Object.assign({ ...state, query: action.payload });
-    };
-  }
-
 }
 ```
 
-- register the service instance to redux
+* Register the service instance to redux
+
 ```typescript
-@NgModule({
-
-})
+@NgModule()
 export class SearchExampleModule {
-
-  constructor(
-    reduxService: ReduxService, 
-    searchExampleService: SearchExampleService) {
-
+  constructor(reduxService: ReduxService, searchExampleService: SearchExampleService){
     reduxService.register(exampleService);
-
   }
-
 }
 ```
+
+# Documentation
+
+* [Service](https://github.com/tagpi/angular-redux-services/blob/master/doc/service.md) - service setup 
+
+* [Action](https://github.com/tagpi/angular-redux-services/blob/master/doc/action.md) - action creation and configuration
+
+* [Epic / Effect](https://github.com/tagpi/angular-redux-services/blob/master/doc/epic.md) - epic creation and configuration
+
+## Added Features
+* [Multiple Service Files](https://github.com/tagpi/angular-redux-services/blob/master/doc/multiple-service.md) - breakdown large services into multiple services
+
+* [State Reset](https://github.com/tagpi/angular-redux-services/blob/master/doc/reset.md) - built in application wide reset 
+
+* [Resolver](https://github.com/tagpi/angular-redux-services/blob/master/doc/resolver.md) - creating resolvers based on state
