@@ -22,8 +22,9 @@ export class SearchConstructService {
     return this.reduxService.select(SearchConstructService.path);
   }
 
-  @rxAction() init() {
-    return (state: State) => {
+  @rxAction(true) init() {
+    return (state: State, payload: any) => {
+      console.log('root', payload.$root);
       state.dat = 'ok';
     };
   }

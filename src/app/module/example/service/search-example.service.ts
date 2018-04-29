@@ -40,7 +40,7 @@ export class SearchExampleService {
     };
   }
 
-  @rxAction(true) clear() {
+  @rxAction(false, true) clear() {
     return (state: State) => {
       return SearchExampleService.initial;
     };
@@ -54,7 +54,7 @@ export class SearchExampleService {
   }
 
   // action using direct state and action references
-  @rxAction(true) unsafe(criteria: string) {
+  @rxAction(false, true) unsafe(criteria: string) {
     return (state: State, action: Action) => {
       return Object.assign({ ...state, query: action.payload });
     };

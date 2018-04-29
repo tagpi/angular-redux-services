@@ -153,8 +153,13 @@ export class MapManager {
     const fn = serviceInstance[propertyName]();
     if (!fn) { return; }
     fn.useOpenAction = !!action.useOpenAction;
+    fn.includeRoot = !!action.includeRoot;
     reducer[actionName] = fn;
     serviceInstance[propertyName] = (payload: any) => {
+      if (fn.includeRoot) {
+        payload = payload || {};
+        payload.$root = reduxService.getState();
+      }
       reduxService.dispatch({ type: actionName, payload });
     };
   }
@@ -166,6 +171,7 @@ export class MapManager {
     const { path, preserve } = serviceInstance.constructor;
     const initial = serviceInstance.constructor.initial || {};
     const reducerMethod = (state: any = initial, action: Action) => {
+
       const op = reducer[action.type];
       if (!op) { return state; }
       if (op.useOpenAction) { return op(state, action); }
