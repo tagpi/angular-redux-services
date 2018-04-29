@@ -97,7 +97,7 @@ export class SearchExampleService {
     };
   }
 
-  @rxAction(null, true) clear() {
+  @rxAction({ direct: true }) clear() {
     return (state: State) => {
       return SearchExampleService.initial;
     };
@@ -111,7 +111,7 @@ export class SearchExampleService {
   }
 
   // using direct state and action references
-  @rxAction(null, true) unsafe(criteria: string) {
+  @rxAction({ direct: true }) unsafe(criteria: string) {
     return (state: State, action: Action) => {
       return Object.assign({ ...state, query: action.payload });
     };

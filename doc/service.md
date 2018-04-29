@@ -56,7 +56,8 @@ export class SearchExampleService {
     };
   }
 
-  @rxEpic('query', 'queryHandler', false) private queryRequest(criteria: string) {
+  @rxEpic('query', 'queryHandler', { cancelable: false}) 
+  private queryRequest(criteria: string) {
     return this
       .searchEndpoint(criteria)
       .pipe(delay(2000));
@@ -68,7 +69,7 @@ export class SearchExampleService {
     };
   }
 
-  @rxAction(null, false, true) clear() {
+  @rxAction({ direct: true }) clear() {
     return (state: State) => {
       return SearchExampleService.initial;
     };
