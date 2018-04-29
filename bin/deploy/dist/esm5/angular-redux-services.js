@@ -1,7 +1,7 @@
 import { __extends, __spread } from 'tslib';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
-import { map, flatMap } from 'rxjs/operators';
+import { map, flatMap, filter, switchMap } from 'rxjs/operators';
 import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
 import { AsyncPipe, CommonModule } from '@angular/common';
@@ -138,6 +138,7 @@ var MapManager = /** @class */ (function () {
                 }
             });
         }
+        this.addResetAction(reduxService, serviceInstance, reducer);
         if (Object.keys(reducer).length) {
             this.addReducer(reduxService, serviceInstance, reducer);
         }
@@ -157,9 +158,8 @@ var MapManager = /** @class */ (function () {
                 payload: result
             }); }));
         }
-        var cancelable = epic.cancelable && serviceInstance.constructor.path + "." + epic.cancelable;
         var sub;
-        if (cancelable) {
+        if (epic.config && epic.config.cancelable) {
             this.epic[actionName].push(function (action) {
                 if (sub) {
                     sub.unsubscribe();
@@ -177,18 +177,46 @@ var MapManager = /** @class */ (function () {
     };
     MapManager.prototype.addAction = function (reduxService, serviceInstance, propertyName, action, reducer) {
         var actionName = serviceInstance.constructor.path + "." + propertyName;
+        switch (propertyName) {
+            case reduxService.initActionType:
+            case reduxService.resetActionType:
+                actionName = propertyName;
+                break;
+        }
         var fn = serviceInstance[propertyName]();
         if (!fn) {
             return;
         }
-        fn.useOpenAction = !!action.useOpenAction;
+        fn.config = action.config;
         reducer[actionName] = fn;
         serviceInstance[propertyName] = function (payload) {
+            if (fn.config.includeRoot) {
+                payload = payload || {};
+                payload.$root = reduxService.getState();
+            }
+            var reply;
+            if (fn.config.return) {
+                var cfg_1 = fn.config.return;
+                var path_1 = cfg_1.path
+                    ? serviceInstance.constructor.path + "." + cfg_1.path
+                    : serviceInstance.constructor.path;
+                if (cfg_1 === true) {
+                    reply = reduxService.select(serviceInstance.constructor.path);
+                }
+                else if (!cfg_1.action) {
+                    reply = reduxService.select(path_1);
+                }
+                else {
+                    reply = reduxService.select(reduxService.reduxServiceName)
+                        .pipe(filter(function (value) { return value === serviceInstance.constructor.path + "." + cfg_1.action; }), switchMap(function () { return reduxService.select(path_1); }));
+                }
+            }
             reduxService.dispatch({ type: actionName, payload: payload });
+            return reply;
         };
     };
     MapManager.prototype.addReducer = function (reduxService, serviceInstance, reducer) {
-        var path = serviceInstance.constructor.path;
+        var _a = serviceInstance.constructor, path = _a.path, preserve = _a.preserve;
         var initial = serviceInstance.constructor.initial || {};
         var reducerMethod = function (state, action) {
             if (state === void 0) { state = initial; }
@@ -196,7 +224,7 @@ var MapManager = /** @class */ (function () {
             if (!op) {
                 return state;
             }
-            if (op.useOpenAction) {
+            if (op.config.direct) {
                 return op(state, action);
             }
             var newState = cloneDeep(state);
@@ -204,6 +232,7 @@ var MapManager = /** @class */ (function () {
             op(newState, payload);
             return newState;
         };
+        reducerMethod['config'] = { path: path, preserve: preserve };
         reduxService.add(path, reducerMethod);
     };
     MapManager.prototype.safeDispatch = function (reduxService, action) {
@@ -216,21 +245,45 @@ var MapManager = /** @class */ (function () {
             epics.forEach(function (epicWrapper) { return epicWrapper(action); });
         }
     };
+    MapManager.prototype.addResetAction = function (reduxService, serviceInstance, reducer) {
+        var keys = Object.getOwnPropertyNames(serviceInstance.constructor.prototype);
+        if (keys.find(function (key) { return key === reduxService.resetActionType; })) {
+            return;
+        }
+        if (serviceInstance.constructor.preserve) {
+            return;
+        }
+        var action = function () {
+            return serviceInstance.constructor.initial || {};
+        };
+        action['config'] = { direct: true };
+        reducer[reduxService.resetActionType] = action;
+    };
     return MapManager;
 }());
 var ReduxService = /** @class */ (function () {
     function ReduxService() {
         var _this = this;
+        this.resetActionType = '@@RESET';
         this.isInitialized = false;
-        this.reducers = {
-            '@redux-service': function (state, action) {
+        this.reducers = (_a = {}, _a[this.reduxServiceName] = function (state, action) {
                 if (state === void 0) { state = {}; }
                 return action.type;
-            }
-        };
+            }, _a);
         this.subscriber = new SubscriberManger(function () { return _this.getState(); });
         this.map = new MapManager();
+        var _a;
     }
+    Object.defineProperty(ReduxService.prototype, "reduxServiceName", {
+        get: function () { return '@redux-service'; },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ReduxService.prototype, "initActionType", {
+        get: function () { return '@@INIT'; },
+        enumerable: true,
+        configurable: true
+    });
     ReduxService.prototype.init = function (preloadedState, middleware, isProduction) {
         if (preloadedState === void 0) { preloadedState = {}; }
         if (middleware === void 0) { middleware = []; }
@@ -240,13 +293,22 @@ var ReduxService = /** @class */ (function () {
         this.store = createStore(combineReducers(this.reducers), preloadedState, loadedMiddleware);
         this.isInitialized = true;
         this.map.init(this);
+        this.select(this.reduxServiceName).subscribe();
     };
     ReduxService.prototype.add = function (name, reducer) {
         this.reducers[name] = reducer;
         this.store.replaceReducer(combineReducers(this.reducers));
     };
-    ReduxService.prototype.register = function (serviceInstance) {
-        this.map.add(this, serviceInstance);
+    ReduxService.prototype.register = function () {
+        var _this = this;
+        var services = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            services[_i] = arguments[_i];
+        }
+        if (arguments && arguments.length) {
+            var args = Array.from(arguments);
+            args.forEach(function (service) { return service && _this.map.add(_this, service); });
+        }
     };
     ReduxService.prototype.getState = function () {
         return this.store.getState();
@@ -257,6 +319,13 @@ var ReduxService = /** @class */ (function () {
     };
     ReduxService.prototype.select = function (path) {
         return this.subscriber.select(path);
+    };
+    ReduxService.prototype.reset = function (clearPreserve) {
+        if (clearPreserve === void 0) { clearPreserve = false; }
+        this.dispatch({
+            type: this.resetActionType,
+            payload: { clearPreserve: clearPreserve }
+        });
     };
     return ReduxService;
 }());
@@ -272,10 +341,16 @@ var RxStatePipe = /** @class */ (function () {
         this.async = new AsyncPipe(this.changeDetectorRef);
     }
     RxStatePipe.prototype.transform = function (value) {
-        return this.async.transform(this.reduxService.select(value));
+        var _this = this;
+        var select = this.reduxService.select(value);
+        this.sub = select.subscribe(function () { return _this.changeDetectorRef.markForCheck(); });
+        return this.async.transform(select);
     };
     RxStatePipe.prototype.ngOnDestroy = function () {
         this.async.ngOnDestroy();
+        if (this.sub) {
+            this.sub.unsubscribe();
+        }
     };
     return RxStatePipe;
 }());
@@ -301,22 +376,26 @@ ReduxModule.decorators = [
                 exports: [RxStatePipe],
             },] },
 ];
-function rxAction(useOpenAction, useCompleteAction) {
-    if (useOpenAction === void 0) { useOpenAction = false; }
-    if (useCompleteAction === void 0) { useCompleteAction = false; }
+function rxAction(config) {
+    if (config === void 0) { config = {}; }
+    config = config || {};
     return function (target, propertyKey, descriptor) {
         target[propertyKey]['__rx__'] = target['__rx__'] || {};
         target[propertyKey]['__rx__'].action = {
             name: "" + propertyKey,
-            useOpenAction: useOpenAction
+            config: config
         };
     };
 }
-function rxEpic(source, relay, cancelable) {
-    if (cancelable === void 0) { cancelable = true; }
+function rxEpic(source, relay, config) {
+    if (config === void 0) { config = {}; }
+    config = config || {};
+    if (config.cancelable === null || config.cancelable === undefined) {
+        config.cancelable = true;
+    }
     return function (target, propertyKey, descriptor) {
         target[propertyKey]['__rx__'] = target['__rx__'] || {};
-        target[propertyKey]['__rx__'].epic = { source: source, relay: relay, cancelable: cancelable };
+        target[propertyKey]['__rx__'].epic = { source: source, relay: relay, config: config };
     };
 }
 

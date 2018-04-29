@@ -1,6 +1,6 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { get, isEqual, cloneDeep } from 'lodash';
-import { map, flatMap } from 'rxjs/operators';
+import { map, flatMap, filter, switchMap } from 'rxjs/operators';
 import { Injectable, NgModule, Pipe, ChangeDetectorRef, defineInjectable } from '@angular/core';
 import { combineReducers, createStore, compose, applyMiddleware } from 'redux';
 import { AsyncPipe, CommonModule } from '@angular/common';
@@ -224,6 +224,8 @@ class MapManager {
                 }
             });
         }
+        // create reset action
+        this.addResetAction(reduxService, serviceInstance, reducer);
         // finalize reducer
         if (Object.keys(reducer).length) {
             this.addReducer(reduxService, serviceInstance, reducer);
@@ -255,10 +257,9 @@ class MapManager {
                 payload: result
             })));
         }
-        const /** @type {?} */ cancelable = epic.cancelable && `${serviceInstance.constructor.path}.${epic.cancelable}`;
         let /** @type {?} */ sub;
         // emit from epic
-        if (cancelable) {
+        if (epic.config && epic.config.cancelable) {
             this.epic[actionName].push((action) => {
                 if (sub) {
                     sub.unsubscribe();
@@ -285,15 +286,46 @@ class MapManager {
      * @return {?}
      */
     addAction(reduxService, serviceInstance, propertyName, action, reducer) {
-        const /** @type {?} */ actionName = `${serviceInstance.constructor.path}.${propertyName}`;
+        let /** @type {?} */ actionName = `${serviceInstance.constructor.path}.${propertyName}`;
+        switch (propertyName) {
+            case reduxService.initActionType:
+            case reduxService.resetActionType:
+                actionName = propertyName;
+                break;
+        }
         const /** @type {?} */ fn = serviceInstance[propertyName]();
         if (!fn) {
             return;
         }
-        fn.useOpenAction = !!action.useOpenAction;
+        fn.config = action.config;
         reducer[actionName] = fn;
         serviceInstance[propertyName] = (payload) => {
+            // include the root state if requested
+            if (fn.config.includeRoot) {
+                payload = payload || {};
+                payload.$root = reduxService.getState();
+            }
+            // return an observable
+            let /** @type {?} */ reply;
+            if (fn.config.return) {
+                const /** @type {?} */ cfg = fn.config.return;
+                const /** @type {?} */ path = cfg.path
+                    ? `${serviceInstance.constructor.path}.${cfg.path}`
+                    : serviceInstance.constructor.path;
+                if (cfg === true) {
+                    reply = reduxService.select(serviceInstance.constructor.path);
+                }
+                else if (!cfg.action) {
+                    reply = reduxService.select(path);
+                }
+                else {
+                    reply = reduxService.select(reduxService.reduxServiceName)
+                        .pipe(filter(value => value === `${serviceInstance.constructor.path}.${cfg.action}`), switchMap(() => reduxService.select(path)));
+                }
+            }
+            // dispatch the action
             reduxService.dispatch({ type: actionName, payload });
+            return reply;
         };
     }
     /**
@@ -304,14 +336,14 @@ class MapManager {
      * @return {?}
      */
     addReducer(reduxService, serviceInstance, reducer) {
-        const /** @type {?} */ path = serviceInstance.constructor.path;
+        const { path, preserve } = serviceInstance.constructor;
         const /** @type {?} */ initial = serviceInstance.constructor.initial || {};
         const /** @type {?} */ reducerMethod = (state = initial, action) => {
             const /** @type {?} */ op = reducer[action.type];
             if (!op) {
                 return state;
             }
-            if (op.useOpenAction) {
+            if (op.config.direct) {
                 return op(state, action);
             }
             const /** @type {?} */ newState = cloneDeep(state);
@@ -319,6 +351,7 @@ class MapManager {
             op(newState, payload);
             return newState;
         };
+        reducerMethod['config'] = { path, preserve };
         reduxService.add(path, reducerMethod);
     }
     /**
@@ -337,6 +370,30 @@ class MapManager {
             epics.forEach(epicWrapper => epicWrapper(action));
         }
     }
+    /**
+     * Creates the reset action.
+     * @param {?} reduxService
+     * @param {?} serviceInstance
+     * @param {?} reducer
+     * @return {?}
+     */
+    addResetAction(reduxService, serviceInstance, reducer) {
+        // do not create reset action if it has been overriden
+        const /** @type {?} */ keys = Object.getOwnPropertyNames(serviceInstance.constructor.prototype);
+        if (keys.find(key => key === reduxService.resetActionType)) {
+            return;
+        }
+        // do not create a reset action if preserve is set
+        if (serviceInstance.constructor.preserve) {
+            return;
+        }
+        // reset to initial
+        const /** @type {?} */ action = () => {
+            return serviceInstance.constructor.initial || {};
+        };
+        action['config'] = { direct: true };
+        reducer[reduxService.resetActionType] = action;
+    }
 }
 
 /**
@@ -345,16 +402,25 @@ class MapManager {
  */
 class ReduxService {
     constructor() {
+        this.resetActionType = '@@RESET';
         this.isInitialized = false;
         /**
          * Reducer list.
          */
         this.reducers = {
-            '@redux-service': (state = {}, action) => action.type
+            [this.reduxServiceName]: (state = {}, action) => action.type
         };
         this.subscriber = new SubscriberManger(() => this.getState());
         this.map = new MapManager();
     }
+    /**
+     * @return {?}
+     */
+    get reduxServiceName() { return '@redux-service'; }
+    /**
+     * @return {?}
+     */
+    get initActionType() { return '@@INIT'; }
     /**
      * Initializes the redux service
      * @param {?=} preloadedState Initial state
@@ -372,6 +438,8 @@ class ReduxService {
         this.isInitialized = true;
         // initialize map with newly created store
         this.map.init(this);
+        // TODO: find why first subscribe does not work
+        this.select(this.reduxServiceName).subscribe();
     }
     /**
      * Add a reducer.
@@ -385,11 +453,14 @@ class ReduxService {
     }
     /**
      * Registers a redux service instance.
-     * @param {?} serviceInstance
+     * @param {...?} services
      * @return {?}
      */
-    register(serviceInstance) {
-        this.map.add(this, serviceInstance);
+    register(...services) {
+        if (arguments && arguments.length) {
+            const /** @type {?} */ args = Array.from(arguments);
+            args.forEach(service => service && this.map.add(this, service));
+        }
     }
     /**
      * Return the current state.
@@ -415,6 +486,17 @@ class ReduxService {
      */
     select(path) {
         return this.subscriber.select(path);
+    }
+    /**
+     * Returns all slices to initial setup.
+     * @param {?=} clearPreserve
+     * @return {?}
+     */
+    reset(clearPreserve = false) {
+        this.dispatch({
+            type: this.resetActionType,
+            payload: { clearPreserve }
+        });
     }
 }
 ReduxService.decorators = [
@@ -443,13 +525,18 @@ class RxStatePipe {
      * @return {?}
      */
     transform(value) {
-        return this.async.transform(this.reduxService.select(value));
+        const /** @type {?} */ select = this.reduxService.select(value);
+        this.sub = select.subscribe(() => this.changeDetectorRef.markForCheck());
+        return this.async.transform(select);
     }
     /**
      * @return {?}
      */
     ngOnDestroy() {
         this.async.ngOnDestroy();
+        if (this.sub) {
+            this.sub.unsubscribe();
+        }
     }
 }
 RxStatePipe.decorators = [
@@ -486,22 +573,16 @@ ReduxModule.decorators = [
  * Configure a action for the state slice. The state and payload
  * parameters has been deep cloned. This output will be the parameter
  * state. It will not read the return output.
- * \@Action(useOpenReducer) fnName(payload: T) {
- *   return (state: State, action: Action) => {
- *     state.param1 = action.payload.param1;
- *     state.param2 = action.payload.param2;
- *   };
- * }
- * @param {?=} useOpenAction Truthy to use traditional redux pattern and full dispatched action.
- * @param {?=} useCompleteAction
+ * @param {?=} config Additonal action configuration
  * @return {?}
  */
-function rxAction(useOpenAction = false, useCompleteAction = false) {
+function rxAction(config = {}) {
+    config = config || {};
     return function (target, propertyKey, descriptor) {
         target[propertyKey]['__rx__'] = target['__rx__'] || {};
         target[propertyKey]['__rx__'].action = {
             name: `${propertyKey}`,
-            useOpenAction
+            config
         };
     };
 }
@@ -512,18 +593,19 @@ function rxAction(useOpenAction = false, useCompleteAction = false) {
  */
 /**
  * Configure an epic.
- * \@epic(source, relay) fnName(payload) {
- *  return Observable.of([ 1, 2, 3 ]);
- * }
  * @param {?} source The action name to create the epic on.
  * @param {?=} relay The action name to call once the epic completes.
- * @param {?=} cancelable The epic will unsubscribe then subscribe every emit.
+ * @param {?=} config Additional configuration
  * @return {?}
  */
-function rxEpic(source, relay, cancelable = true) {
+function rxEpic(source, relay, config = {}) {
+    config = config || {};
+    if (config.cancelable === null || config.cancelable === undefined) {
+        config.cancelable = true;
+    }
     return function (target, propertyKey, descriptor) {
         target[propertyKey]['__rx__'] = target['__rx__'] || {};
-        target[propertyKey]['__rx__'].epic = { source, relay, cancelable };
+        target[propertyKey]['__rx__'].epic = { source, relay, config };
     };
 }
 

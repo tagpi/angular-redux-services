@@ -1,6 +1,9 @@
 import { BehaviorSubject } from 'rxjs';
 import { Action } from '../model/action.model';
 export declare class ReduxService {
+    readonly reduxServiceName: string;
+    readonly initActionType: string;
+    resetActionType: string;
     isInitialized: boolean;
     /**
      * Redux store.
@@ -36,7 +39,7 @@ export declare class ReduxService {
      * Registers a redux service instance.
      * @param serviceInstance
      */
-    register(serviceInstance: any): void;
+    register(...services: any[]): void;
     /**
      * Return the current state.
      */
@@ -51,4 +54,8 @@ export declare class ReduxService {
      * @param path
      */
     select<T>(path: string): BehaviorSubject<T>;
+    /**
+     * Returns all slices to initial setup.
+     */
+    reset(clearPreserve?: boolean): void;
 }

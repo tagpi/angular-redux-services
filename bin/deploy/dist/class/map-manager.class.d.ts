@@ -49,4 +49,8 @@ export declare class MapManager {
      * @param action
      */
     safeDispatch(reduxService: ReduxService, action: Action): void;
+    /**
+     * Creates the reset action.
+     */
+    private addResetAction(reduxService, serviceInstance, reducer);
 }
