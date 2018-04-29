@@ -22,13 +22,17 @@ export class SearchExampleService {
     return this.reduxService.select<State>(SearchExampleService.path);
   }
 
-  @rxAction() query(criteria: string) {
+  // @rxAction({ return: true })
+  @rxAction({ return: { action: 'queryHandler'} })
+  // @rxAction({ return: { path: 'query'} })
+  query(criteria: string): any {
     return (state: State, payload: typeof criteria) => {
       state.query = payload;
     };
   }
 
-  @rxEpic('query', 'queryHandler', false) private queryRequest(criteria: string) {
+  @rxEpic('query', 'queryHandler', { cancelable: false })
+  private queryRequest(criteria: string) {
     return this
       .searchEndpoint(criteria)
       .pipe(delay(2000));
@@ -40,7 +44,7 @@ export class SearchExampleService {
     };
   }
 
-  @rxAction(false, true) clear() {
+  @rxAction({ direct: true }) clear() {
     return (state: State) => {
       return SearchExampleService.initial;
     };
@@ -54,9 +58,15 @@ export class SearchExampleService {
   }
 
   // action using direct state and action references
-  @rxAction(false, true) unsafe(criteria: string) {
+  @rxAction({ direct: true }) unsafe(criteria: string) {
     return (state: State, action: Action) => {
       return Object.assign({ ...state, query: action.payload });
+    };
+  }
+
+  @rxAction() ['@@RESET']() {
+    return (state: State) => {
+      state.result = [];
     };
   }
 

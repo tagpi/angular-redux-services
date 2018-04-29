@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 import { ReduxService } from '../../../redux';
 import { SearchExampleService } from '../../service/search-example.service';
 import { SearchExampleSortService } from '../../service/search-example-sort.service';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'index',
@@ -44,6 +45,13 @@ export class IndexComponent implements OnInit, OnDestroy {
   unsubscribe() {
     const sub = this.subs.shift();
     sub.unsubscribe();
+  }
+
+  queryPlus() {
+    this.searchExampleService
+      .query('auto return')
+      .pipe(take(1))
+      .subscribe(reply => console.log('reply', reply));
   }
 
 }

@@ -9,10 +9,8 @@ import { Action } from '../model/action.model';
 @Injectable({ providedIn: 'root' })
 export class ReduxService {
 
-  private get reduxServiceName() {
-    return '@redux-service';
-  }
-
+  public get reduxServiceName() { return '@redux-service'; }
+  public get initActionType() { return '@@INIT'; }
   public resetActionType = '@@RESET';
   public isInitialized = false;
 
@@ -71,6 +69,9 @@ export class ReduxService {
 
     // initialize map with newly created store
     this.map.init(this);
+
+    // TODO: find why first subscribe does not work
+    this.select(this.reduxServiceName).subscribe();
 
   }
 

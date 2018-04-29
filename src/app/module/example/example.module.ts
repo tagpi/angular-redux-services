@@ -28,8 +28,8 @@ export class ExampleModule {
     searchConstructService: SearchConstructService) {
 
     reduxService.register(
-      searchExampleService,
       searchExampleSortService,
+      searchExampleService,
       searchConstructService
     );
 

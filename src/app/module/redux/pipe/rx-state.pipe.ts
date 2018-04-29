@@ -1,6 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Pipe, PipeTransform, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { ReduxService } from '../service/redux.service';
+import { Subscription } from 'rxjs';
 
 @Pipe({
   name: 'rxState',
@@ -9,17 +10,21 @@ import { ReduxService } from '../service/redux.service';
 export class RxStatePipe implements PipeTransform, OnDestroy {
 
   async: AsyncPipe;
+  sub: Subscription;
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private reduxService: ReduxService) {
     this.async = new AsyncPipe(this.changeDetectorRef);
   }
 
   transform(value: string): any {
-    return this.async.transform(this.reduxService.select(value));
+    const select = this.reduxService.select(value);
+    this.sub = select.subscribe(() => this.changeDetectorRef.markForCheck());
+    return this.async.transform(select);
   }
 
   ngOnDestroy () {
     this.async.ngOnDestroy();
+    if (this.sub) { this.sub.unsubscribe(); }
   }
 
 }

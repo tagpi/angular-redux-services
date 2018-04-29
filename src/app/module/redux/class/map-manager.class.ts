@@ -1,8 +1,9 @@
 import { get, cloneDeep } from 'lodash';
 import { ReduxService } from '../service/redux.service';
 import { Action } from '../model/action.model';
-import { take, map, flatMap } from 'rxjs/operators';
+import { take, map, flatMap, filter, switchMap } from 'rxjs/operators';
 import { Observable, Observer, Subscription } from 'rxjs';
+import { ActionConfig } from '../model/action-config.model';
 
 export class MapManager {
 
@@ -124,11 +125,10 @@ export class MapManager {
       })));
     }
 
-    const cancelable = epic.cancelable && `${serviceInstance.constructor.path}.${epic.cancelable}`;
     let sub: Subscription;
 
     // emit from epic
-    if (cancelable) {
+    if (epic.config && epic.config.cancelable) {
       this.epic[actionName].push((action: Action) => {
         if (sub) { sub.unsubscribe(); }
         sub = observable.subscribe(payload => reduxService.dispatch(payload));
@@ -149,18 +149,55 @@ export class MapManager {
    * Add an action
    */
   private addAction(reduxService: ReduxService, serviceInstance: any, propertyName: string, action: any, reducer: any) {
-    const actionName = `${serviceInstance.constructor.path}.${propertyName}`;
-    const fn = serviceInstance[propertyName]();
+    let actionName = `${serviceInstance.constructor.path}.${propertyName}`;
+    switch (propertyName) {
+      case reduxService.initActionType:
+      case reduxService.resetActionType:
+        actionName = propertyName;
+        break;
+    }
+
+    const fn: { config: ActionConfig } = serviceInstance[propertyName]();
     if (!fn) { return; }
-    fn.useOpenAction = !!action.useOpenAction;
-    fn.includeRoot = !!action.includeRoot;
+
+    fn.config = action.config;
     reducer[actionName] = fn;
+
     serviceInstance[propertyName] = (payload: any) => {
-      if (fn.includeRoot) {
+
+      // include the root state if requested
+      if (fn.config.includeRoot) {
         payload = payload || {};
         payload.$root = reduxService.getState();
       }
+
+      // return an observable
+      let reply;
+      if (fn.config.return) {
+
+        const cfg: any = fn.config.return;
+        const path = cfg.path
+          ? `${serviceInstance.constructor.path}.${cfg.path}`
+          : serviceInstance.constructor.path;
+
+        if (cfg === true) {
+          reply = reduxService.select(serviceInstance.constructor.path);
+        } else if (!cfg.action) {
+          reply = reduxService.select(path);
+        } else {
+          reply = reduxService.select(reduxService.reduxServiceName)
+            .pipe(
+              filter(value => value === `${serviceInstance.constructor.path}.${cfg.action}`),
+              switchMap(() => reduxService.select(path)),
+            );
+        }
+
+      }
+
+      // dispatch the action
       reduxService.dispatch({ type: actionName, payload });
+      return reply;
+
     };
   }
 
@@ -174,7 +211,7 @@ export class MapManager {
 
       const op = reducer[action.type];
       if (!op) { return state; }
-      if (op.useOpenAction) { return op(state, action); }
+      if (op.config.direct) { return op(state, action); }
 
       const newState = cloneDeep(state);
       const payload = cloneDeep(action.payload);
@@ -224,7 +261,7 @@ export class MapManager {
     const action = () => {
       return serviceInstance.constructor.initial || {};
     };
-    action['useOpenAction'] = true;
+    action['config'] = { direct: true };
     reducer[reduxService.resetActionType] = action;
 
   }
